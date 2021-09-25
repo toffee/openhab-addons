@@ -1,0 +1,262 @@
+/**
+ * Copyright (c) 2010-2021 Contributors to the openHAB project
+ *
+ * See the NOTICE file(s) distributed with this work for additional
+ * information.
+ *
+ * This program and the accompanying materials are made available under the
+ * terms of the Eclipse Public License 2.0 which is available at
+ * http://www.eclipse.org/legal/epl-2.0
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+package org.openhab.binding.proheat.internal.handler;
+
+import static org.openhab.binding.proheat.internal.ProheatBindingConstants.*;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.Optional;
+import java.util.Set;
+import java.util.TooManyListenersException;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
+import org.eclipse.jdt.annotation.NonNullByDefault;
+import org.eclipse.jdt.annotation.Nullable;
+import org.openhab.io.transport.serial.PortInUseException;
+import org.openhab.io.transport.serial.SerialPort;
+import org.openhab.io.transport.serial.SerialPortEvent;
+import org.openhab.io.transport.serial.SerialPortEventListener;
+import org.openhab.io.transport.serial.SerialPortIdentifier;
+import org.openhab.io.transport.serial.SerialPortManager;
+import org.openhab.io.transport.serial.UnsupportedCommOperationException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+@NonNullByDefault
+public class ProheatBridgeHandlerTest  implements SerialPortEventListener {
+    private static final int END_OF_MESSAGE = '\r';
+    private static final int END_OF_STREAM = -1;
+
+    private final Logger logger = LoggerFactory.getLogger(ProheatBridgeHandlerTest.class);
+
+    
+    private @Nullable SerialPort serialPort;
+    private @Nullable ProheatReceiverThread receiverThread;
+    private @Nullable ProheatSenderThread senderThread;
+    private final SerialPortManager serialPortManager;
+
+    
+    public ProheatBridgeHandlerTest(SerialPortManager serialPortManager) {
+        this.serialPortManager = serialPortManager;
+    }
+
+    @SuppressWarnings("null")
+    @Override
+    public void initialize() {
+        String port = "/dev/ttyOpenHabSnow";
+        SerialPortIdentifier portId = serialPortManager.getIdentifier(port);
+        if (portId == null) {
+            logger.error("No such port: " + port);
+            return;
+        }
+
+        try {
+            serialPort = initializeSerialPort(portId);
+
+            InputStream inputStream = serialPort.getInputStream();
+            OutputStream outputStream = serialPort.getOutputStream();
+
+            if (inputStream == null || outputStream == null) {
+                logger.error("Input/Output stream null");
+                return;
+            }
+
+            receiverThread = new ProheatReceiverThread(inputStream);
+            senderThread = new ProheatSenderThread(outputStream);
+
+            receiverThread.start();
+            senderThread.start();
+        } catch (PortInUseException e) {
+            logger.error("Port in use: " + port);
+        } catch (Exception e) {
+            logger.error("Communication error: " + e.getMessage());
+        }
+    }
+
+    @SuppressWarnings("null")
+    private @Nullable SerialPort initializeSerialPort(SerialPortIdentifier portId)
+            throws PortInUseException, TooManyListenersException, UnsupportedCommOperationException {
+        SerialPort serialPort = portId.open(getThing().getUID().toString(), 2000);
+        serialPort.setSerialPortParams(9600, SerialPort.DATABITS_8, SerialPort.STOPBITS_1,
+                SerialPort.PARITY_NONE);
+        serialPort.enableReceiveThreshold(0);
+        serialPort.enableReceiveTimeout(1000);
+
+        // RXTX serial port library causes high CPU load
+        // Start event listener, which will just sleep and slow down event loop
+        serialPort.addEventListener(this);
+        serialPort.notifyOnDataAvailable(true);
+
+        return serialPort;
+    }
+
+    public void handleResponse(String message) {
+        logger.info("SNOW SNOW '{}'", message);
+        if (!"^KA9".equals(message)) {
+            logger.info("SNOW RECEIVE '{}'", message);
+        }
+    }
+
+    /**
+     * Closes the serial connection to the snowmelting module.
+     */
+    @SuppressWarnings("null")
+    @Override
+    public void dispose() {
+        stopThread(senderThread);
+        stopThread(receiverThread);
+        senderThread = null;
+        receiverThread = null;
+        if (serialPort != null) {
+            try {
+                InputStream inputStream = serialPort.getInputStream();
+                if (inputStream != null) {
+                    inputStream.close();
+                }
+            } catch (IOException e) {
+                logger.debug("Error closing input stream", e);
+            }
+
+            try {
+                OutputStream outputStream = serialPort.getOutputStream();
+                if (outputStream != null) {
+                    outputStream.close();
+                }
+            } catch (IOException e) {
+                logger.debug("Error closing output stream", e);
+            }
+
+            serialPort.close();
+            serialPort = null;
+        }
+        logger.info("Stopped Proheat serial handler");
+
+        super.dispose();
+    }
+
+    private void stopThread(@Nullable Thread thread) {
+        if (thread != null) {
+            thread.interrupt();
+            try {
+                thread.join(1000);
+            } catch (InterruptedException e) {
+            }
+        }
+    }
+
+    public void handleCommunicationError() {
+        updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR);
+        if (reinitializeTask == null) {
+            reinitializeTask = scheduler.schedule(() -> {
+                logger.info("Reconnecting to device...");
+                thingUpdated(getThing());
+                reinitializeTask = null;
+            }, REINITIALIZE_DELAY, TimeUnit.MINUTES);
+        }
+    }
+
+    @Override
+    public void serialEvent(@Nullable SerialPortEvent arg0) {
+        try {
+            logger.trace("RXTX library CPU load workaround, sleep forever");
+            Thread.sleep(Long.MAX_VALUE);
+        } catch (InterruptedException ignored) {
+        }
+    }
+
+    private class ProheatReceiverThread extends Thread {
+
+        private final Logger logger = LoggerFactory.getLogger(ProheatReceiverThread.class);
+
+        private final InputStream stream;
+
+        ProheatReceiverThread(InputStream stream) {
+            super("ProheatReceiveThread");
+            this.stream = stream;
+        }
+
+        @Override
+        public void run() {
+            logger.debug("Receiver thread started");
+            while (!interrupted()) {
+                try {
+                    Optional<String> message = readLineBlocking();
+                    message.ifPresent(m -> {
+                        logger.debug("message received: '{}'", m);
+                        handleResponse(m);
+                    });
+                    if (messagesSent.get() - responsesReceived.get() > STALLED_MESSAGES_THRESHOLD) {
+                        throw new IOException("Snowmelting module is not responding!");
+                    }
+
+                } catch (IOException e) {
+                    handleCommunicationError();
+                    break;
+                }
+            }
+            logger.debug("Receiver thread finished");
+        }
+
+        private Optional<String> readLineBlocking() throws IOException {
+            StringBuilder s = new StringBuilder();
+            while (true) {
+                int c = stream.read();
+                logger.info("CHAR {}", c);
+                if (c == END_OF_STREAM) {
+                    return Optional.empty();
+                }
+                if (c == END_OF_MESSAGE) {
+                    break;
+                }
+                s.append((char) c);
+            }
+            return Optional.of(s.toString());
+        }
+    }
+
+    private class ProheatSenderThread extends Thread {
+
+        private static final int SLEEP_TIME = 150;
+
+        private final Logger logger = LoggerFactory.getLogger(ProheatSenderThread.class);
+
+        private OutputStream stream;
+
+        public ProheatSenderThread(OutputStream stream) {
+            super("ProheatSenderThread");
+            this.stream = stream;
+        }
+
+        @Override
+        public void run() {
+            logger.debug("Sender thread started");
+            while (!interrupted()) {
+                try {
+                    Thread.sleep(SLEEP_TIME); 
+                } catch (IOException e) {
+                    handleCommunicationError();
+                    break;
+                } catch (InterruptedException e) {
+                    break;
+                }
+            }
+            logger.debug("Sender thread finished");
+        }
+    }
+}

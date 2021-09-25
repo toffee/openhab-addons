@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<thing:thing-descriptions bindingId="proheat"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:thing="https://openhab.org/schemas/thing-description/v1.0.0"
+	xsi:schemaLocation="https://openhab.org/schemas/thing-description/v1.0.0 https://openhab.org/schemas/thing-description-1.0.0.xsd">
+
+	<thing-type id="hcc02">
+		<label>Proheat Module</label>
+		<description>Proheat HCC02 module with Serial Interface</description>
+		<channel-groups>
+			<channel-group typeId="statistics" id="statistics"/>
+			<channel-group typeId="device" id="device"/>
+		</channel-groups>
+
+		<config-description>
+			<parameter-group name="port">
+				<context>communication</context>
+				<label>Port Configuration</label>
+				<description></description>
+			</parameter-group>
+
+			<parameter name="port" type="text" required="true" groupName="port">
+				<label>Serial Port</label>
+				<context>serial-port</context>
+				<limitToOptions>false</limitToOptions>
+				<description>Set the serial port used to access snowmelting device</description>
+				<default></default>
+			</parameter>
+
+			<parameter name="baudrate" type="integer" required="true" groupName="port">
+				<label>Baud Rate</label>
+				<context>serial-port</context>
+				<description>Set the serial port baud rate</description>
+				<default>9600</default>
+				<limitToOptions>true</limitToOptions>
+				<options>
+					<option value="2400">2400</option>
+					<option value="9600">9600</option>
+					<option value="19200">19200</option>
+					<option value="57600">57600</option>
+				</options>
+			</parameter>
+		</config-description>
+	</thing-type>
+
+	<channel-group-type id="statistics">
+		<label>Statistics</label>
+		<description>Statistics of serial communication</description>
+		<channels>
+			<channel typeId="events_received" id="events_received"/>
+			<channel typeId="events_received_lasttime" id="events_received_lasttime"/>
+		</channels>
+	</channel-group-type>
+
+	<channel-type id="events_received">
+		<item-type>Number</item-type>
+		<label>Events Received</label>
+		<description>Counts events received from the snowmelting system</description>
+	</channel-type>
+
+	<channel-type id="events_received_lasttime">
+		<item-type>DateTime</item-type>
+		<label>Events Last received time</label>
+		<description>The time when the last event received</description>
+		<state readOnly="true"/>
+	</channel-type>
+
+	<channel-group-type id="device">
+		<label>Device</label>
+		<description>Device operation channels</description>
+		<channels>
+			<channel typeId="enabled" id="enabled"/>
+			<channel typeId="mode_auto" id="mode_auto"/>
+			<channel typeId="moisture_enabled" id="moisture_enabled"/>
+			<channel typeId="temperature_value" id="temperature_value"/>
+			<channel typeId="moisture_value" id="moisture_value"/>
+			<channel typeId="moisture_value_text" id="moisture_value_text"/>
+			<channel typeId="heating" id="heating"/>
+			<channel typeId="heating_planned" id="heating_planned"/>
+			<channel typeId="heating_remained" id="heating_remained"/>
+		</channels>
+	</channel-group-type>
+
+	<channel-type id="enabled">
+		<item-type>Switch</item-type>
+		<label>Enable status</label>
+		<description>Reports is the device is enabled</description>
+		<state readOnly="true"></state>
+	</channel-type>
+
+	<channel-type id="mode_auto">
+		<item-type>Switch</item-type>
+		<label>Operation mode</label>
+		<description>Reports the operation mode of device - automatic or manual</description>
+		<state readOnly="true"></state>
+	</channel-type>
+
+	<channel-type id="moisture_enabled">
+		<item-type>Switch</item-type>
+		<label>Moisture enabled</label>
+		<description>Reports is the device consider moisture for operation</description>
+		<state readOnly="true"></state>
+	</channel-type>
+
+	<channel-type id="temperature_value">
+		<item-type>Number</item-type>
+		<label>Temperature value</label>
+		<description>The last meassured temperature value</description>
+		<state readOnly="true"></state>
+	</channel-type>
+
+	<channel-type id="moisture_value">
+		<item-type>Number</item-type>
+		<label>Moisture value</label>
+		<description>The last meassured moisture value</description>
+		<state readOnly="true"></state>
+	</channel-type>
+
+	<channel-type id="moisture_value_text">
+		<item-type>String</item-type>
+		<label>Moisture value text</label>
+		<description>The last meassured moisture value</description>
+		<state readOnly="true"></state>
+	</channel-type>
+
+	<channel-type id="heating">
+		<item-type>Switch</item-type>
+		<label>Device heating status</label>
+		<description>Reports is the device is heating</description>
+		<state readOnly="true"></state>
+	</channel-type>
+
+	<channel-type id="heating_planned">
+		<item-type>String</item-type>
+		<label>Device planned heating time</label>
+		<description>Reports the time that the device is planning to heat</description>
+		<state readOnly="true"></state>
+	</channel-type>
+
+	<channel-type id="heating_remained">
+		<item-type>String</item-type>
+		<label>Device remained heating time</label>
+		<description>Reports the remained time for heating</description>
+		<state readOnly="true"></state>
+	</channel-type>
+</thing:thing-descriptions>
