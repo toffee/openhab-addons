@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2010-2021 Contributors to the openHAB project
+ * Copyright (c) 2010-2022 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -421,8 +421,10 @@ public class WemoHandler extends AbstractWemoHandler implements UpnpIOParticipan
                     } else {
                         value = substringBetween(wemoCallResponse, "<BinaryState>", "</BinaryState>");
                     }
-                    logger.trace("New state '{}' for device '{}' received", value, getThing().getUID());
-                    this.onValueReceived(variable, value, actionService + "1");
+                    if (value.length() != 0) {
+                        logger.trace("New state '{}' for device '{}' received", value, getThing().getUID());
+                        this.onValueReceived(variable, value, actionService + "1");
+                    }
                 }
             }
         } catch (Exception e) {
