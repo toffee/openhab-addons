@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2010-2021 Contributors to the openHAB project
+ * Copyright (c) 2010-2022 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -123,4 +123,8 @@ public final class MiIoBindingConstants {
             + File.separator + BINDING_ID;
     public static final String BINDING_USERDATA_PATH = OpenHAB.getUserDataFolder() + File.separator
             + MiIoBindingConstants.BINDING_ID;
+
+    public static final String I18N_THING_PREFIX = "thing.";
+    public static final String I18N_CHANNEL_PREFIX = "ch.";
+    public static final String I18N_OPTION_PREFIX = "option.";
 }

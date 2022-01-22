@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2010-2021 Contributors to the openHAB project
+ * Copyright (c) 2010-2022 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -133,13 +133,12 @@ public class PowermaxBridgeHandler extends BaseBridgeHandler implements Powermax
 
         String threadName = "OH-binding-" + getThing().getUID().getAsString();
 
-        String errorMsg = null;
+        String errorMsg = String.format("@text/offline.config-error-unexpected-thing-type [ \"%s\" ]",
+                getThing().getThingTypeUID().getAsString());
         if (getThing().getThingTypeUID().equals(BRIDGE_TYPE_SERIAL)) {
             errorMsg = initializeBridgeSerial(getConfigAs(PowermaxSerialConfiguration.class), threadName);
         } else if (getThing().getThingTypeUID().equals(BRIDGE_TYPE_IP)) {
             errorMsg = initializeBridgeIp(getConfigAs(PowermaxIpConfiguration.class), threadName);
-        } else {
-            errorMsg = "Unexpected thing type " + getThing().getThingTypeUID();
         }
 
         if (errorMsg == null) {
@@ -188,9 +187,9 @@ public class PowermaxBridgeHandler extends BaseBridgeHandler implements Powermax
                     serialPortManager, threadName, timeZoneProvider);
         } else {
             if (serialPort.startsWith("rfc2217")) {
-                errorMsg = "Please use the IP Connection thing type for a serial over IP connection.";
+                errorMsg = "@text/offline.config-error-invalid-thing-type";
             } else {
-                errorMsg = "serialPort setting must be defined in thing configuration";
+                errorMsg = "@text/offline.config-error-mandatory-serial-port";
             }
         }
         return errorMsg;
@@ -216,7 +215,7 @@ public class PowermaxBridgeHandler extends BaseBridgeHandler implements Powermax
             commManager = new PowermaxCommManager(ip, config.tcpPort, panelType, forceStandardMode, config.autoSyncTime,
                     threadName, timeZoneProvider);
         } else {
-            errorMsg = "ip and port settings must be defined in thing configuration";
+            errorMsg = "@text/offline.config-error-mandatory-ip-port";
         }
         return errorMsg;
     }
