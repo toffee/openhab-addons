@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2010-2021 Contributors to the openHAB project
+ * Copyright (c) 2010-2022 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -29,8 +29,6 @@ import org.openhab.core.thing.Thing;
 import org.openhab.core.thing.ThingStatus;
 import org.openhab.core.thing.ThingStatusDetail;
 import org.openhab.core.thing.binding.BaseThingHandler;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * This class implements the base Souliss Typical All other Typicals derive from
@@ -52,7 +50,6 @@ public abstract class SoulissGenericHandler extends BaseThingHandler implements 
 
     private int iSlot;
     private int iNode;
-    private final Logger logger = LoggerFactory.getLogger(SoulissGenericHandler.class);
 
     private final CommonCommands commonCommands = new CommonCommands();
 
