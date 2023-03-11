@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2010-2022 Contributors to the openHAB project
+ * Copyright (c) 2010-2023 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -196,4 +196,16 @@ public class NeoHubBindingConstants {
     public static final String PROPERTY_FIRMWARE_VERSION = "Firmware version";
     public static final String PROPERTY_API_VERSION = "API version";
     public static final String PROPERTY_API_DEVICEINFO = "Devices [online/total]";
+
+    /*
+     * reserved ports on the hub
+     */
+    public static final int PORT_TCP = 4242;
+    public static final int PORT_WSS = 4243;
+
+    /*
+     * web socket communication constants
+     */
+    public static final String HM_GET_COMMAND_QUEUE = "hm_get_command_queue";
+    public static final String HM_SET_COMMAND_RESPONSE = "hm_set_command_response";
 }

@@ -140,7 +140,7 @@
 		</channels>
 	</channel-group-type>
 
-	<channel-group-type id="last-event-smoke">
+	<channel-group-type id="last-event-alarm">
 		<label>Last Event</label>
 		<channels>
 			<channel id="type" typeId="event-type"/>
@@ -184,6 +184,13 @@
 				<label>Last Seen</label>
 				<description>Moment when this person was last seen.</description>
 			</channel>
+		</channels>
+	</channel-group-type>
+
+	<channel-group-type id="tag">
+		<label>Door Tag</label>
+		<channels>
+			<channel id="status" typeId="tag-status"/>
 		</channels>
 	</channel-group-type>
 

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2010-2022 Contributors to the openHAB project
+ * Copyright (c) 2010-2023 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -42,7 +42,7 @@ import org.slf4j.LoggerFactory;
 public class Device {
     private final Logger logger = LoggerFactory.getLogger(Device.class);
 
-    private transient static final String DEVICE_TYPE_PREFIX = "gardena smart";
+    private static final transient String DEVICE_TYPE_PREFIX = "gardena smart";
     public boolean active = true;
     public String id;
     public String deviceType;
@@ -152,8 +152,12 @@ public class Device {
             throw new GardenaException("Unknown dataItem with id: " + dataItem.id);
         }
 
-        if (common != null && common.attributes != null) {
-            common.attributes.lastUpdate.timestamp = new Date();
+        if (common != null) {
+            CommonService attributes = common.attributes;
+            if (attributes != null) {
+                attributes.lastUpdate.timestamp = new Date();
+            }
+            common.attributes = attributes;
         }
     }
 
