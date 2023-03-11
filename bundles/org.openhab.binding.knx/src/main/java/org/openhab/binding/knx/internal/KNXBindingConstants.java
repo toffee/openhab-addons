@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2010-2022 Contributors to the openHAB project
+ * Copyright (c) 2010-2023 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -22,7 +22,7 @@ import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.openhab.core.thing.ThingTypeUID;
 
 /**
- * The {@link KNXBinding} class defines common constants, which are
+ * The {@link KNXBindingConstants} class defines common constants, which are
  * used across the whole binding.
  *
  * @author Karel Goderis - Initial contribution
@@ -38,13 +38,16 @@ public class KNXBindingConstants {
     public static final ThingTypeUID THING_TYPE_DEVICE = new ThingTypeUID(BINDING_ID, "device");
 
     // Property IDs
-    public static final String FIRMWARE_TYPE = "firmwaretype";
-    public static final String FIRMWARE_VERSION = "firmwareversion";
-    public static final String FIRMWARE_SUBVERSION = "firmwaresubversion";
-    public static final String MANUFACTURER_NAME = "manfacturername";
-    public static final String MANUFACTURER_SERIAL_NO = "manfacturerserialnumber";
-    public static final String MANUFACTURER_HARDWARE_TYPE = "manfacturerhardwaretype";
-    public static final String MANUFACTURER_FIRMWARE_REVISION = "manfacturerfirmwarerevision";
+    public static final String DEVICE_MASK_VERSION = "deviceMaskVersion";
+    public static final String DEVICE_PROFILE = "deviceProfile";
+    public static final String DEVICE_MEDIUM_TYPE = "deviceMediumType";
+    public static final String FRIENDLY_NAME = "deviceName";
+    public static final String MANUFACTURER_NAME = "manufacturerName";
+    public static final String MANUFACTURER_SERIAL_NO = "manufacturerSerialNumber";
+    public static final String MANUFACTURER_HARDWARE_TYPE = "manufacturerHardwareType";
+    public static final String MANUFACTURER_FIRMWARE_REVISION = "manufacturerFirmwareRevision";
+    public static final String MANUFACTURER_ORDER_INFO = "manufacturerOrderInfo";
+    public static final String MAX_APDU_LENGTH = "maxApduLength";
 
     // Thing Configuration parameters
     public static final String IP_ADDRESS = "ipAddress";
@@ -54,6 +57,10 @@ public class KNXBindingConstants {
     public static final String PORT_NUMBER = "portNumber";
     public static final String SERIAL_PORT = "serialPort";
     public static final String USE_CEMI = "useCemi";
+    public static final String ROUTER_BACKBONE_GROUP_KEY = "routerBackboneGroupKey";
+    public static final String TUNNEL_USER_ID = "tunnelUserId";
+    public static final String TUNNEL_USER_PASSWORD = "tunnelUserPassword";
+    public static final String TUNNEL_DEVICE_AUTHENTICATION = "tunnelDeviceAuthentication";
 
     // The default multicast ip address (see <a
     // href="http://www.iana.org/assignments/multicast-addresses/multicast-addresses.xml">iana</a> EIBnet/IP

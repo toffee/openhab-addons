@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2010-2022 Contributors to the openHAB project
+ * Copyright (c) 2010-2023 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -12,6 +12,8 @@
  */
 package org.openhab.binding.hdpowerview.internal.handler;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -28,26 +30,26 @@ import org.eclipse.jetty.client.HttpClient;
 import org.openhab.binding.hdpowerview.internal.HDPowerViewBindingConstants;
 import org.openhab.binding.hdpowerview.internal.HDPowerViewTranslationProvider;
 import org.openhab.binding.hdpowerview.internal.HDPowerViewWebTargets;
-import org.openhab.binding.hdpowerview.internal.api.Firmware;
-import org.openhab.binding.hdpowerview.internal.api.responses.FirmwareVersions;
-import org.openhab.binding.hdpowerview.internal.api.responses.SceneCollections;
-import org.openhab.binding.hdpowerview.internal.api.responses.SceneCollections.SceneCollection;
-import org.openhab.binding.hdpowerview.internal.api.responses.Scenes;
-import org.openhab.binding.hdpowerview.internal.api.responses.Scenes.Scene;
-import org.openhab.binding.hdpowerview.internal.api.responses.ScheduledEvents;
-import org.openhab.binding.hdpowerview.internal.api.responses.ScheduledEvents.ScheduledEvent;
-import org.openhab.binding.hdpowerview.internal.api.responses.Shades;
-import org.openhab.binding.hdpowerview.internal.api.responses.Shades.ShadeData;
 import org.openhab.binding.hdpowerview.internal.builders.AutomationChannelBuilder;
 import org.openhab.binding.hdpowerview.internal.builders.SceneChannelBuilder;
 import org.openhab.binding.hdpowerview.internal.builders.SceneGroupChannelBuilder;
 import org.openhab.binding.hdpowerview.internal.config.HDPowerViewHubConfiguration;
 import org.openhab.binding.hdpowerview.internal.config.HDPowerViewShadeConfiguration;
+import org.openhab.binding.hdpowerview.internal.dto.Firmware;
+import org.openhab.binding.hdpowerview.internal.dto.HubFirmware;
+import org.openhab.binding.hdpowerview.internal.dto.Scene;
+import org.openhab.binding.hdpowerview.internal.dto.SceneCollection;
+import org.openhab.binding.hdpowerview.internal.dto.ScheduledEvent;
+import org.openhab.binding.hdpowerview.internal.dto.ShadeData;
+import org.openhab.binding.hdpowerview.internal.dto.UserData;
+import org.openhab.binding.hdpowerview.internal.dto.responses.SceneCollections;
+import org.openhab.binding.hdpowerview.internal.dto.responses.Scenes;
+import org.openhab.binding.hdpowerview.internal.dto.responses.ScheduledEvents;
+import org.openhab.binding.hdpowerview.internal.dto.responses.Shades;
 import org.openhab.binding.hdpowerview.internal.exceptions.HubException;
 import org.openhab.binding.hdpowerview.internal.exceptions.HubInvalidResponseException;
 import org.openhab.binding.hdpowerview.internal.exceptions.HubMaintenanceException;
 import org.openhab.binding.hdpowerview.internal.exceptions.HubProcessingException;
-import org.openhab.core.library.CoreItemFactory;
 import org.openhab.core.library.types.OnOffType;
 import org.openhab.core.thing.Bridge;
 import org.openhab.core.thing.Channel;
@@ -60,7 +62,6 @@ import org.openhab.core.thing.ThingStatusInfo;
 import org.openhab.core.thing.ThingUID;
 import org.openhab.core.thing.binding.BaseBridgeHandler;
 import org.openhab.core.thing.binding.ThingHandler;
-import org.openhab.core.thing.binding.builder.ChannelBuilder;
 import org.openhab.core.thing.type.ChannelTypeUID;
 import org.openhab.core.types.Command;
 import org.openhab.core.types.RefreshType;
@@ -82,6 +83,7 @@ public class HDPowerViewHubHandler extends BaseBridgeHandler {
     private final HttpClient httpClient;
     private final HDPowerViewTranslationProvider translationProvider;
     private final ConcurrentHashMap<ThingUID, ShadeData> pendingShadeInitializations = new ConcurrentHashMap<>();
+    private final Duration firmwareVersionValidityPeriod = Duration.ofDays(1);
 
     private long refreshInterval;
     private long hardRefreshPositionInterval;
@@ -95,8 +97,7 @@ public class HDPowerViewHubHandler extends BaseBridgeHandler {
     private List<Scene> sceneCache = new CopyOnWriteArrayList<>();
     private List<SceneCollection> sceneCollectionCache = new CopyOnWriteArrayList<>();
     private List<ScheduledEvent> scheduledEventCache = new CopyOnWriteArrayList<>();
-    private @Nullable FirmwareVersions firmwareVersions;
-    private Boolean deprecatedChannelsCreated = false;
+    private Instant userDataUpdated = Instant.MIN;
 
     private final ChannelTypeUID sceneChannelTypeUID = new ChannelTypeUID(HDPowerViewBindingConstants.BINDING_ID,
             HDPowerViewBindingConstants.CHANNELTYPE_SCENE_ACTIVATE);
@@ -141,6 +142,7 @@ public class HDPowerViewHubHandler extends BaseBridgeHandler {
             }
         } catch (HubMaintenanceException e) {
             // exceptions are logged in HDPowerViewWebTargets
+            userDataUpdated = Instant.MIN;
         } catch (NumberFormatException | HubException e) {
             logger.debug("Unexpected error {}", e.getMessage());
         }
@@ -164,7 +166,7 @@ public class HDPowerViewHubHandler extends BaseBridgeHandler {
         hardRefreshPositionInterval = config.hardRefresh;
         hardRefreshBatteryLevelInterval = config.hardRefreshBatteryLevel;
         initializeChannels();
-        firmwareVersions = null;
+        userDataUpdated = Instant.MIN;
 
         updateStatus(ThingStatus.UNKNOWN);
         schedulePoll();
@@ -176,7 +178,6 @@ public class HDPowerViewHubHandler extends BaseBridgeHandler {
         sceneCache.clear();
         sceneCollectionCache.clear();
         scheduledEventCache.clear();
-        deprecatedChannelsCreated = false;
     }
 
     public HDPowerViewWebTargets getWebTargets() {
@@ -279,7 +280,7 @@ public class HDPowerViewHubHandler extends BaseBridgeHandler {
 
     private synchronized void poll() {
         try {
-            updateFirmwareProperties();
+            updateUserDataProperties();
         } catch (HubException e) {
             logger.warn("Failed to update firmware properties: {}", e.getMessage());
         }
@@ -304,25 +305,49 @@ public class HDPowerViewHubHandler extends BaseBridgeHandler {
             }
         } catch (HubMaintenanceException e) {
             // exceptions are logged in HDPowerViewWebTargets
+            userDataUpdated = Instant.MIN;
         } catch (HubException e) {
             logger.warn("Error connecting to bridge: {}", e.getMessage());
             updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR, e.getMessage());
+            userDataUpdated = Instant.MIN;
         }
     }
 
-    private void updateFirmwareProperties()
+    private void updateUserDataProperties()
             throws HubInvalidResponseException, HubProcessingException, HubMaintenanceException {
-        if (firmwareVersions != null) {
+        if (userDataUpdated.isAfter(Instant.now().minus(firmwareVersionValidityPeriod))) {
             return;
         }
-        FirmwareVersions firmwareVersions = webTargets.getFirmwareVersions();
+
+        UserData userData = webTargets.getUserData();
+        Map<String, String> properties = editProperties();
+        HubFirmware firmwareVersions = userData.firmware;
+        if (firmwareVersions != null) {
+            updateFirmwareProperties(properties, firmwareVersions);
+        }
+        String serialNumber = userData.serialNumber;
+        if (serialNumber != null) {
+            properties.put(Thing.PROPERTY_SERIAL_NUMBER, serialNumber);
+        }
+        String macAddress = userData.macAddress;
+        if (macAddress != null) {
+            properties.put(Thing.PROPERTY_MAC_ADDRESS, macAddress);
+        }
+        String hubName = userData.getHubName();
+        if (!hubName.isEmpty()) {
+            properties.put(HDPowerViewBindingConstants.PROPERTY_HUB_NAME, hubName);
+        }
+        updateProperties(properties);
+        userDataUpdated = Instant.now();
+    }
+
+    private void updateFirmwareProperties(Map<String, String> properties, HubFirmware firmwareVersions) {
         Firmware mainProcessor = firmwareVersions.mainProcessor;
         if (mainProcessor == null) {
             logger.warn("Main processor firmware version missing in response.");
             return;
         }
         logger.debug("Main processor firmware version received: {}, {}", mainProcessor.name, mainProcessor.toString());
-        Map<String, String> properties = editProperties();
         String mainProcessorName = mainProcessor.name;
         if (mainProcessorName != null) {
             properties.put(HDPowerViewBindingConstants.PROPERTY_FIRMWARE_NAME, mainProcessorName);
@@ -333,7 +358,6 @@ public class HDPowerViewHubHandler extends BaseBridgeHandler {
             logger.debug("Radio firmware version received: {}", radio.toString());
             properties.put(HDPowerViewBindingConstants.PROPERTY_RADIO_FIRMWARE_VERSION, radio.toString());
         }
-        updateProperties(properties);
     }
 
     private void pollShades() throws HubInvalidResponseException, HubProcessingException, HubMaintenanceException {
@@ -453,50 +477,7 @@ public class HDPowerViewHubHandler extends BaseBridgeHandler {
 
         updateThing(editThing().withChannels(channelBuilder.build()).build());
 
-        createDeprecatedSceneChannels(scenes);
-
         return scenes;
-    }
-
-    /**
-     * Create backwards compatible scene channels if any items configured before release 3.2
-     * are still linked. Users should have a reasonable amount of time to migrate to the new
-     * scene channels that are connected to a channel group.
-     */
-    private void createDeprecatedSceneChannels(List<Scene> scenes) {
-        if (deprecatedChannelsCreated) {
-            // Only do this once.
-            return;
-        }
-        ChannelGroupUID channelGroupUid = new ChannelGroupUID(thing.getUID(),
-                HDPowerViewBindingConstants.CHANNEL_GROUP_SCENES);
-        for (Scene scene : scenes) {
-            String channelId = Integer.toString(scene.id);
-            ChannelUID newChannelUid = new ChannelUID(channelGroupUid, channelId);
-            ChannelUID deprecatedChannelUid = new ChannelUID(getThing().getUID(), channelId);
-            String description = translationProvider.getText("dynamic-channel.scene-activate.deprecated.description",
-                    scene.getName());
-            Channel channel = ChannelBuilder.create(deprecatedChannelUid, CoreItemFactory.SWITCH)
-                    .withType(sceneChannelTypeUID).withLabel(scene.getName()).withDescription(description).build();
-            logger.debug("Creating deprecated channel '{}' ('{}') to probe for linked items", deprecatedChannelUid,
-                    scene.getName());
-            updateThing(editThing().withChannel(channel).build());
-            if (this.isLinked(deprecatedChannelUid) && !this.isLinked(newChannelUid)) {
-                logger.warn("Created deprecated channel '{}' ('{}'), please link items to '{}' instead",
-                        deprecatedChannelUid, scene.getName(), newChannelUid);
-            } else {
-                if (this.isLinked(newChannelUid)) {
-                    logger.debug("Removing deprecated channel '{}' ('{}') since new channel '{}' is linked",
-                            deprecatedChannelUid, scene.getName(), newChannelUid);
-
-                } else {
-                    logger.debug("Removing deprecated channel '{}' ('{}') since it has no linked items",
-                            deprecatedChannelUid, scene.getName());
-                }
-                updateThing(editThing().withoutChannel(deprecatedChannelUid).build());
-            }
-        }
-        deprecatedChannelsCreated = true;
     }
 
     private List<SceneCollection> fetchSceneCollections()

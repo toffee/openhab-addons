@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2010-2022 Contributors to the openHAB project
+ * Copyright (c) 2010-2023 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -13,8 +13,7 @@
 package org.openhab.transform.scale.internal;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -37,9 +36,9 @@ import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 import org.mockito.stubbing.Answer;
 import org.openhab.core.library.types.QuantityType;
-import org.openhab.core.transform.TransformationConfiguration;
-import org.openhab.core.transform.TransformationConfigurationRegistry;
+import org.openhab.core.transform.Transformation;
 import org.openhab.core.transform.TransformationException;
+import org.openhab.core.transform.TransformationRegistry;
 
 /**
  * @author Gaël L'hopital - Initial contribution
@@ -51,8 +50,8 @@ public class ScaleTransformServiceTest {
     private static final String SRC_FOLDER = "conf" + File.separator + "transform";
 
     @Mock
-    private @NonNullByDefault({}) TransformationConfigurationRegistry transformationConfigurationRegistry;
-    private final Map<String, TransformationConfiguration> configurationMap = new HashMap<>();
+    private @NonNullByDefault({}) TransformationRegistry transformationConfigurationRegistry;
+    private final Map<String, Transformation> configurationMap = new HashMap<>();
     private @NonNullByDefault({}) ScaleTransformationService processor;
 
     @BeforeEach
@@ -62,15 +61,15 @@ public class ScaleTransformServiceTest {
             try {
                 String content = new String(Files.readAllBytes(file), StandardCharsets.UTF_8);
                 String uid = Path.of(SRC_FOLDER).relativize(file).toString();
-                TransformationConfiguration transformationConfiguration = new TransformationConfiguration(uid, uid,
-                        "scale", null, content);
+                Transformation transformationConfiguration = new Transformation(uid, uid, "scale",
+                        Map.of(Transformation.FUNCTION, content));
                 configurationMap.put(uid, transformationConfiguration);
             } catch (IOException ignored) {
             }
         });
 
         Mockito.when(transformationConfigurationRegistry.get(anyString(), eq(null)))
-                .thenAnswer((Answer<TransformationConfiguration>) invocation -> {
+                .thenAnswer((Answer<Transformation>) invocation -> {
                     Object[] args = invocation.getArguments();
                     return configurationMap.get(args[0]);
                 });
@@ -80,12 +79,12 @@ public class ScaleTransformServiceTest {
     @Test
     public void testTransformByScale() throws TransformationException {
         // need to be sure we'll have the german version
-        String existingscale = "scale/humidex_de.scale";
+        String existingscale = "scale" + File.separator + "humidex_de.scale";
         String source = "10";
         String transformedResponse = processor.transform(existingscale, source);
         assertEquals("nicht wesentlich", transformedResponse);
 
-        existingscale = "scale/limits.scale";
+        existingscale = "scale" + File.separator + "limits.scale";
         source = "10";
         transformedResponse = processor.transform(existingscale, source);
         assertEquals("middle", transformedResponse);
@@ -93,7 +92,7 @@ public class ScaleTransformServiceTest {
 
     @Test
     public void testTransformByScaleLimits() throws TransformationException {
-        String existingscale = "scale/limits.scale";
+        String existingscale = "scale" + File.separator + "limits.scale";
 
         // Testing upper bound opened range
         String source = "500";
@@ -106,7 +105,7 @@ public class ScaleTransformServiceTest {
         assertEquals("low", transformedResponse);
 
         // Testing unfinite up and down range
-        existingscale = "scale/catchall.scale";
+        existingscale = "scale" + File.separator + "catchall.scale";
         source = "-10";
         transformedResponse = processor.transform(existingscale, source);
         assertEquals("catchall", transformedResponse);
@@ -116,7 +115,7 @@ public class ScaleTransformServiceTest {
     public void testTransformByScaleUndef() throws TransformationException {
         // check that for undefined/non numeric value we return empty string
         // Issue #1107
-        String existingscale = "scale/humidex_fr.scale";
+        String existingscale = "scale" + File.separator + "humidex_fr.scale";
         String source = "-";
         assertThrows(TransformationException.class, () -> processor.transform(existingscale, source));
     }
@@ -125,7 +124,7 @@ public class ScaleTransformServiceTest {
     public void testTransformByScaleErrorInBounds() throws TransformationException {
         // the tested file contains inputs that generate a conversion error of the bounds
         // of range
-        String existingscale = "scale/erroneous.scale";
+        String existingscale = "scale" + File.separator + "erroneous.scale";
         String source = "15";
         try {
             @SuppressWarnings("unused")
@@ -139,7 +138,7 @@ public class ScaleTransformServiceTest {
     @Test
     public void testTransformByScaleErrorInValue() throws TransformationException {
         // checks that an error is raised when trying to scale an erroneous value
-        String existingscale = "scale/evaluationorder.scale";
+        String existingscale = "scale" + File.separator + "evaluationorder.scale";
         String source = "azerty";
         assertThrows(TransformationException.class, () -> processor.transform(existingscale, source));
     }
@@ -147,7 +146,7 @@ public class ScaleTransformServiceTest {
     @Test
     public void testEvaluationOrder() throws TransformationException {
         // Ensures that only first matching scale as presented in the file is taken in account
-        String evaluationOrder = "scale/evaluationorder.scale";
+        String evaluationOrder = "scale" + File.separator + "evaluationorder.scale";
         // This value matches two lines of the scale file
         String source = "12";
 
@@ -158,7 +157,7 @@ public class ScaleTransformServiceTest {
     @Test
     public void testTransformQuantityType() throws TransformationException {
         QuantityType<Dimensionless> airQuality = new QuantityType<>("992 ppm");
-        String aqScaleFile = "scale/netatmo_aq.scale";
+        String aqScaleFile = "scale" + File.separator + "netatmo_aq.scale";
         String expected = "Correcte (992 ppm) !";
 
         String transformedResponse = processor.transform(aqScaleFile, airQuality.toString());
@@ -168,7 +167,7 @@ public class ScaleTransformServiceTest {
     @Test
     public void testCatchNonNumericValue() throws TransformationException {
         // checks that an error is raised when trying to scale an erroneous value
-        String existingscale = "scale/catchnonnumeric.scale";
+        String existingscale = "scale" + File.separator + "catchnonnumeric.scale";
         String source = "azerty";
         String transformedResponse = processor.transform(existingscale, source);
         assertEquals("Non Numeric", transformedResponse);
@@ -176,7 +175,7 @@ public class ScaleTransformServiceTest {
 
     @Test
     public void testTransformAndFormat() throws TransformationException {
-        String existingscale = "scale/netatmo_aq.scale";
+        String existingscale = "scale" + File.separator + "netatmo_aq.scale";
         String source = "992";
         String transformedResponse = processor.transform(existingscale, source);
         assertEquals("Correcte (992) !", transformedResponse);
@@ -184,7 +183,7 @@ public class ScaleTransformServiceTest {
 
     @Test
     public void testValueExceedsRange() throws TransformationException {
-        String existingscale = "scale/humidex.scale";
+        String existingscale = "scale" + File.separator + "humidex.scale";
         String source = "200";
         assertThrows(TransformationException.class, () -> processor.transform(existingscale, source));
     }

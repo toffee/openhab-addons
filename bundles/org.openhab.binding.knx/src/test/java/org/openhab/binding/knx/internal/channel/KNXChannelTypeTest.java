@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2010-2022 Contributors to the openHAB project
+ * Copyright (c) 2010-2023 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -27,19 +27,23 @@ import org.junit.jupiter.api.Test;
  *
  */
 @NonNullByDefault
-public class KNXChannelTypeTest {
+class KNXChannelTypeTest {
 
     private KNXChannelType ct = new MyKNXChannelType("");
 
     @BeforeEach
-    public void setup() {
+    void setup() {
         ct = new MyKNXChannelType("");
     }
 
-    @SuppressWarnings("null")
     @Test
-    public void testParseWithDptMultipleWithRead() {
+    void testParseWithDptMultipleWithRead() {
         ChannelConfiguration res = ct.parse("5.001:<1/3/22+0/3/22+<0/8/15");
+
+        if (res == null) {
+            fail();
+            return;
+        }
 
         assertEquals("5.001", res.getDPT());
         assertEquals("1/3/22", res.getMainGA().getGA());
@@ -48,10 +52,14 @@ public class KNXChannelTypeTest {
         assertEquals(2, res.getReadGAs().size());
     }
 
-    @SuppressWarnings("null")
     @Test
-    public void testParseWithDptMultipleWithoutRead() {
+    void testParseWithDptMultipleWithoutRead() {
         ChannelConfiguration res = ct.parse("5.001:1/3/22+0/3/22+0/8/15");
+
+        if (res == null) {
+            fail();
+            return;
+        }
 
         assertEquals("5.001", res.getDPT());
         assertEquals("1/3/22", res.getMainGA().getGA());
@@ -60,10 +68,14 @@ public class KNXChannelTypeTest {
         assertEquals(0, res.getReadGAs().size());
     }
 
-    @SuppressWarnings("null")
     @Test
-    public void testParseWithoutDptSingleWithoutRead() {
+    void testParseWithoutDptSingleWithoutRead() {
         ChannelConfiguration res = ct.parse("1/3/22");
+
+        if (res == null) {
+            fail();
+            return;
+        }
 
         assertNull(res.getDPT());
         assertEquals("1/3/22", res.getMainGA().getGA());
@@ -72,10 +84,14 @@ public class KNXChannelTypeTest {
         assertEquals(0, res.getReadGAs().size());
     }
 
-    @SuppressWarnings("null")
     @Test
-    public void testParseWithoutDptSingleWitRead() {
+    void testParseWithoutDptSingleWitRead() {
         ChannelConfiguration res = ct.parse("<1/3/22");
+
+        if (res == null) {
+            fail();
+            return;
+        }
 
         assertNull(res.getDPT());
         assertEquals("1/3/22", res.getMainGA().getGA());
@@ -84,19 +100,29 @@ public class KNXChannelTypeTest {
         assertEquals(1, res.getReadGAs().size());
     }
 
-    @SuppressWarnings("null")
     @Test
-    public void testParseTwoLevel() {
+    void testParseTwoLevel() {
         ChannelConfiguration res = ct.parse("5.001:<3/1024+<4/1025");
+
+        if (res == null) {
+            fail();
+            return;
+        }
+
         assertEquals("3/1024", res.getMainGA().getGA());
         assertEquals(2, res.getListenGAs().size());
         assertEquals(2, res.getReadGAs().size());
     }
 
-    @SuppressWarnings("null")
     @Test
-    public void testParseFreeLevel() {
+    void testParseFreeLevel() {
         ChannelConfiguration res = ct.parse("5.001:<4610+<4611");
+
+        if (res == null) {
+            fail();
+            return;
+        }
+
         assertEquals("4610", res.getMainGA().getGA());
         assertEquals(2, res.getListenGAs().size());
         assertEquals(2, res.getReadGAs().size());
