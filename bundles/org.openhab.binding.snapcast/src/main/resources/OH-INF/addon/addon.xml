@@ -6,6 +6,6 @@
 	<type>binding</type>
 	<name>Snapcast Binding</name>
 	<description>This is the binding for Snapcast.</description>
-	<author>Steffen Brandemann</author>
+	<connection>local</connection>
 
 </addon:addon>
