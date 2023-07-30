@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2010-2022 Contributors to the openHAB project
+ * Copyright (c) 2010-2023 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -66,19 +66,20 @@ public class HydrawiseAccountHandler extends BaseBridgeHandler implements Access
     private static final String CLIENT_SECRET = "zn3CrjglwNV1";
     private static final String CLIENT_ID = "hydrawise_app";
     private static final String SCOPE = "all";
-    private final List<HydrawiseControllerListener> controllerListeners = new ArrayList<HydrawiseControllerListener>();
-    private final HydrawiseGraphQLClient apiClient;
-    private final OAuthClientService oAuthService;
+    private final List<HydrawiseControllerListener> controllerListeners = Collections
+            .synchronizedList(new ArrayList<HydrawiseControllerListener>());
+    private final HttpClient httpClient;
+    private final OAuthFactory oAuthFactory;
+    private @Nullable OAuthClientService oAuthService;
+    private @Nullable HydrawiseGraphQLClient apiClient;
     private @Nullable ScheduledFuture<?> pollFuture;
     private @Nullable Customer lastData;
     private int refresh;
 
     public HydrawiseAccountHandler(final Bridge bridge, final HttpClient httpClient, final OAuthFactory oAuthFactory) {
         super(bridge);
-        this.oAuthService = oAuthFactory.createOAuthClientService(getThing().toString(), AUTH_URL, AUTH_URL, CLIENT_ID,
-                CLIENT_SECRET, SCOPE, false);
-        oAuthService.addAccessTokenRefreshListener(this);
-        this.apiClient = new HydrawiseGraphQLClient(httpClient, oAuthService);
+        this.httpClient = httpClient;
+        this.oAuthFactory = oAuthFactory;
     }
 
     @Override
@@ -87,14 +88,31 @@ public class HydrawiseAccountHandler extends BaseBridgeHandler implements Access
 
     @Override
     public void initialize() {
+        OAuthClientService oAuthService = oAuthFactory.createOAuthClientService(getThing().toString(), AUTH_URL,
+                AUTH_URL, CLIENT_ID, CLIENT_SECRET, SCOPE, false);
+        this.oAuthService = oAuthService;
+        oAuthService.addAccessTokenRefreshListener(this);
+        this.apiClient = new HydrawiseGraphQLClient(httpClient, oAuthService);
         logger.debug("Handler initialized.");
-        scheduler.schedule(this::configure, 0, TimeUnit.SECONDS);
+        scheduler.schedule(() -> configure(oAuthService), 0, TimeUnit.SECONDS);
     }
 
     @Override
     public void dispose() {
         logger.debug("Handler disposed.");
         clearPolling();
+        OAuthClientService oAuthService = this.oAuthService;
+        if (oAuthService != null) {
+            oAuthService.removeAccessTokenRefreshListener(this);
+            oAuthFactory.ungetOAuthService(getThing().toString());
+            this.oAuthService = null;
+        }
+    }
+
+    @Override
+    public void handleRemoval() {
+        oAuthFactory.deleteServiceAndAccessToken(getThing().toString());
+        super.handleRemoval();
     }
 
     @Override
@@ -116,7 +134,9 @@ public class HydrawiseAccountHandler extends BaseBridgeHandler implements Access
     }
 
     public void removeControllerListeners(HydrawiseControllerListener listener) {
-        this.controllerListeners.remove(listener);
+        synchronized (controllerListeners) {
+            this.controllerListeners.remove(listener);
+        }
     }
 
     public @Nullable HydrawiseGraphQLClient graphQLClient() {
@@ -131,7 +151,7 @@ public class HydrawiseAccountHandler extends BaseBridgeHandler implements Access
         initPolling(delaySeconds, this.refresh);
     }
 
-    private void configure() {
+    private void configure(OAuthClientService oAuthService) {
         HydrawiseAccountConfiguration config = getConfig().as(HydrawiseAccountConfiguration.class);
         try {
             if (!config.userName.isEmpty() && !config.password.isEmpty()) {
@@ -197,9 +217,11 @@ public class HydrawiseAccountHandler extends BaseBridgeHandler implements Access
                 updateStatus(ThingStatus.ONLINE);
             }
             lastData = response.data.me;
-            controllerListeners.forEach(listener -> {
-                listener.onData(response.data.me.controllers);
-            });
+            synchronized (controllerListeners) {
+                controllerListeners.forEach(listener -> {
+                    listener.onData(response.data.me.controllers);
+                });
+            }
         } catch (HydrawiseConnectionException e) {
             if (retry) {
                 logger.debug("Retrying failed poll", e);

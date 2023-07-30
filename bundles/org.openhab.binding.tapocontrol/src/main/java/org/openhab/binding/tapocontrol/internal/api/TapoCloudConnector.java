@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2010-2022 Contributors to the openHAB project
+ * Copyright (c) 2010-2023 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -13,8 +13,9 @@
 package org.openhab.binding.tapocontrol.internal.api;
 
 import static org.openhab.binding.tapocontrol.internal.constants.TapoBindingSettings.*;
-import static org.openhab.binding.tapocontrol.internal.constants.TapoErrorConstants.*;
+import static org.openhab.binding.tapocontrol.internal.constants.TapoErrorCode.*;
 
+import java.util.UUID;
 import java.util.concurrent.TimeoutException;
 
 import org.eclipse.jdt.annotation.NonNullByDefault;
@@ -83,7 +84,7 @@ public class TapoCloudConnector {
      * @return true if login was successfull
      */
     public Boolean login(String username, String password) {
-        this.token = getToken(username, password, TAPO_TERMINAL_UUID);
+        this.token = getToken(username, password, UUID.randomUUID().toString());
         this.url = TAPO_CLOUD_URL + "?token=" + token;
         return !this.token.isBlank();
     }
@@ -138,11 +139,11 @@ public class TapoCloudConnector {
                     logger.trace("cloud returns error: '{}'", rBody);
                 }
             } else {
-                handleError(new TapoErrorHandler(ERR_JSON_DECODE_FAIL));
+                handleError(new TapoErrorHandler(ERR_API_JSON_DECODE_FAIL));
                 logger.trace("unexpected json-response '{}'", rBody);
             }
         } else {
-            handleError(new TapoErrorHandler(ERR_HTTP_RESPONSE, ERR_HTTP_RESPONSE_MSG));
+            handleError(new TapoErrorHandler(ERR_BINDING_HTTP_RESPONSE));
             logger.warn("invalid response while login");
             token = "";
         }
@@ -228,7 +229,7 @@ public class TapoCloudConnector {
             handleError(new TapoErrorHandler(e));
         } catch (TimeoutException e) {
             logger.debug("({}) sending request timeout: {}", uid, e.toString());
-            handleError(new TapoErrorHandler(ERR_CONNECT_TIMEOUT, e.toString()));
+            handleError(new TapoErrorHandler(ERR_BINDING_CONNECT_TIMEOUT, e.toString()));
         } catch (Exception e) {
             logger.debug("({}) sending request failed: {}", uid, e.toString());
             handleError(new TapoErrorHandler(e));

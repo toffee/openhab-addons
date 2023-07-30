@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2010-2022 Contributors to the openHAB project
+ * Copyright (c) 2010-2023 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -12,12 +12,15 @@
  */
 package org.openhab.binding.yamahamusiccast.internal.dto;
 
+import org.eclipse.jdt.annotation.Nullable;
+
 import com.google.gson.annotations.SerializedName;
 
 /**
  * This class represents the UDP event received from the Yamaha model/device.
  *
  * @author Lennert Coopman - Initial contribution
+ * @author Florian Hotze - Add volume in decibel
  */
 
 public class UdpMessage {
@@ -74,6 +77,8 @@ public class UdpMessage {
         private String power;
         @SerializedName("volume")
         private int volume = 0;
+        @SerializedName("actual_volume")
+        private ActualVolume actualVolume;
         @SerializedName("mute")
         private String mute;
         @SerializedName("input")
@@ -104,6 +109,10 @@ public class UdpMessage {
 
         public int getVolume() {
             return volume;
+        }
+
+        public @Nullable ActualVolume getActualVolume() {
+            return actualVolume;
         }
 
         public String getstatusUpdated() {

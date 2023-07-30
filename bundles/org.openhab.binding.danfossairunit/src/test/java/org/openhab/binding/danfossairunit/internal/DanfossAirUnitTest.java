@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2010-2022 Contributors to the openHAB project
+ * Copyright (c) 2010-2023 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -20,13 +20,17 @@ import java.io.IOException;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 
-import org.junit.jupiter.api.BeforeEach;
+import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.openhab.core.library.types.DateTimeType;
 import org.openhab.core.library.types.DecimalType;
 import org.openhab.core.library.types.OnOffType;
 import org.openhab.core.library.types.PercentType;
 import org.openhab.core.library.types.QuantityType;
+import org.openhab.core.library.unit.Units;
 import org.openhab.core.test.java.JavaTest;
 
 /**
@@ -34,14 +38,11 @@ import org.openhab.core.test.java.JavaTest;
  * 
  * @author Jacob Laursen - Initial contribution
  */
+@NonNullByDefault
+@ExtendWith(MockitoExtension.class)
 public class DanfossAirUnitTest extends JavaTest {
 
-    private CommunicationController communicationController;
-
-    @BeforeEach
-    private void setUp() {
-        this.communicationController = mock(CommunicationController.class);
-    }
+    private @NonNullByDefault({}) @Mock CommunicationController communicationController;
 
     @Test
     public void getUnitNameIsReturned() throws IOException {
@@ -144,6 +145,14 @@ public class DanfossAirUnitTest extends JavaTest {
                 .thenReturn(response);
         var airUnit = new DanfossAirUnit(communicationController);
         assertEquals(new PercentType(50), airUnit.getManualFanStep());
+    }
+
+    @Test
+    public void getSupplyFanSpeedIsReturnedAsRPM() throws IOException {
+        byte[] response = new byte[] { (byte) 0x04, (byte) 0xda };
+        when(this.communicationController.sendRobustRequest(REGISTER_4_READ, SUPPLY_FAN_SPEED)).thenReturn(response);
+        var airUnit = new DanfossAirUnit(communicationController);
+        assertEquals(new QuantityType<>(1242, Units.RPM), airUnit.getSupplyFanSpeed());
     }
 
     @Test

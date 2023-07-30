@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2010-2022 Contributors to the openHAB project
+ * Copyright (c) 2010-2023 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -17,7 +17,6 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import org.eclipse.jdt.annotation.Nullable;
-import org.openhab.core.library.types.DecimalType;
 import org.openhab.io.homekit.internal.HomekitAccessoryUpdater;
 import org.openhab.io.homekit.internal.HomekitCharacteristicType;
 import org.openhab.io.homekit.internal.HomekitSettings;
@@ -44,11 +43,8 @@ class HomekitTemperatureSensorImpl extends AbstractHomekitAccessoryImpl implemen
 
     @Override
     public CompletableFuture<Double> getCurrentTemperature() {
-        final @Nullable DecimalType state = getStateAs(HomekitCharacteristicType.CURRENT_TEMPERATURE,
-                DecimalType.class);
-        return CompletableFuture
-                .completedFuture(state != null ? HomekitCharacteristicFactory.convertToCelsius(state.doubleValue())
-                        : getMinCurrentTemperature());
+        final @Nullable Double state = getStateAsTemperature(HomekitCharacteristicType.CURRENT_TEMPERATURE);
+        return CompletableFuture.completedFuture(state != null ? state : getMinCurrentTemperature());
     }
 
     @Override
@@ -65,7 +61,7 @@ class HomekitTemperatureSensorImpl extends AbstractHomekitAccessoryImpl implemen
                 getAccessoryConfiguration(HomekitCharacteristicType.CURRENT_TEMPERATURE, HomekitTaggedItem.MIN_VALUE,
                         BigDecimal.valueOf(HomekitCharacteristicFactory
                                 .convertFromCelsius(CurrentTemperatureCharacteristic.DEFAULT_MIN_VALUE)))
-                                        .doubleValue());
+                        .doubleValue());
     }
 
     @Override
@@ -74,13 +70,14 @@ class HomekitTemperatureSensorImpl extends AbstractHomekitAccessoryImpl implemen
                 getAccessoryConfiguration(HomekitCharacteristicType.CURRENT_TEMPERATURE, HomekitTaggedItem.MAX_VALUE,
                         BigDecimal.valueOf(HomekitCharacteristicFactory
                                 .convertFromCelsius(CurrentTemperatureCharacteristic.DEFAULT_MAX_VALUE)))
-                                        .doubleValue());
+                        .doubleValue());
     }
 
     @Override
     public double getMinStepCurrentTemperature() {
-        return getAccessoryConfiguration(HomekitCharacteristicType.CURRENT_TEMPERATURE, HomekitTaggedItem.STEP,
-                BigDecimal.valueOf(TargetTemperatureCharacteristic.DEFAULT_STEP)).doubleValue();
+        return HomekitCharacteristicFactory.getTemperatureStep(
+                getCharacteristic(HomekitCharacteristicType.CURRENT_TEMPERATURE).get(),
+                TargetTemperatureCharacteristic.DEFAULT_STEP);
     }
 
     @Override

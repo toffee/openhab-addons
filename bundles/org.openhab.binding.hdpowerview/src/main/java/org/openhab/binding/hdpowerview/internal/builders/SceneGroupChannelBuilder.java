@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2010-2022 Contributors to the openHAB project
+ * Copyright (c) 2010-2023 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -18,12 +18,13 @@ import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
 import org.openhab.binding.hdpowerview.internal.HDPowerViewBindingConstants;
 import org.openhab.binding.hdpowerview.internal.HDPowerViewTranslationProvider;
-import org.openhab.binding.hdpowerview.internal.api.responses.SceneCollections.SceneCollection;
+import org.openhab.binding.hdpowerview.internal.dto.SceneCollection;
 import org.openhab.core.library.CoreItemFactory;
 import org.openhab.core.thing.Channel;
 import org.openhab.core.thing.ChannelGroupUID;
 import org.openhab.core.thing.ChannelUID;
 import org.openhab.core.thing.binding.builder.ChannelBuilder;
+import org.openhab.core.thing.type.AutoUpdatePolicy;
 
 /**
  * The {@link SceneGroupChannelBuilder} class creates scene group channels
@@ -97,6 +98,7 @@ public class SceneGroupChannelBuilder extends BaseChannelBuilder {
         String description = translationProvider.getText("dynamic-channel.scene-group-activate.description",
                 sceneCollection.getName());
         return ChannelBuilder.create(channelUid, CoreItemFactory.SWITCH).withType(channelTypeUid)
-                .withLabel(sceneCollection.getName()).withDescription(description).build();
+                .withLabel(sceneCollection.getName()).withDescription(description)
+                .withAutoUpdatePolicy(AutoUpdatePolicy.VETO).build();
     }
 }

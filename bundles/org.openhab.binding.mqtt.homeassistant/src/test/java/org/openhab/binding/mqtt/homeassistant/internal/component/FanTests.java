@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2010-2022 Contributors to the openHAB project
+ * Copyright (c) 2010-2023 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -17,6 +17,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.util.Set;
 
+import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.junit.jupiter.api.Test;
 import org.openhab.binding.mqtt.generic.values.OnOffValue;
 import org.openhab.core.library.types.OnOffType;
@@ -26,10 +27,11 @@ import org.openhab.core.library.types.OnOffType;
  *
  * @author Anton Kharuzhy - Initial contribution
  */
-@SuppressWarnings("ALL")
+@NonNullByDefault
 public class FanTests extends AbstractComponentTests {
     public static final String CONFIG_TOPIC = "fan/0x0000000000000000_fan_zigbee2mqtt";
 
+    @SuppressWarnings("null")
     @Test
     public void test() throws InterruptedException {
         // @formatter:off
@@ -78,6 +80,41 @@ public class FanTests extends AbstractComponentTests {
         assertPublished("zigbee2mqtt/fan/set/state", "ON_");
     }
 
+    @SuppressWarnings("null")
+    @Test
+    public void testCommandTemplate() throws InterruptedException {
+        var component = discoverComponent(configTopicToMqtt(CONFIG_TOPIC), """
+                        {
+                            "availability": [
+                            {
+                                "topic": "zigbee2mqtt/bridge/state"
+                            }
+                            ],
+                            "device": {
+                            "identifiers": [
+                                "zigbee2mqtt_0x0000000000000000"
+                            ],
+                            "manufacturer": "Fans inc",
+                            "model": "Fan",
+                            "name": "FanBlower",
+                            "sw_version": "Zigbee2MQTT 1.18.2"
+                            },
+                            "name": "fan",
+                            "payload_off": "OFF_",
+                            "payload_on": "ON_",
+                            "state_topic": "zigbee2mqtt/fan/state",
+                            "command_topic": "zigbee2mqtt/fan/set/state",
+                            "command_template": "set to {{ value }}"
+                        }
+                """);
+
+        assertThat(component.channels.size(), is(1));
+
+        component.getChannel(Fan.SWITCH_CHANNEL_ID).getState().publishValue(OnOffType.OFF);
+        assertPublished("zigbee2mqtt/fan/set/state", "set to OFF_");
+    }
+
+    @Override
     protected Set<String> getConfigTopics() {
         return Set.of(CONFIG_TOPIC);
     }

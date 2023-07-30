@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2010-2022 Contributors to the openHAB project
+ * Copyright (c) 2010-2023 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -24,8 +24,6 @@ import org.openhab.binding.mqtt.homeassistant.internal.config.dto.AbstractChanne
 import org.openhab.binding.mqtt.homeassistant.internal.exception.ConfigurationException;
 import org.openhab.binding.mqtt.homeassistant.internal.exception.UnsupportedComponentException;
 import org.openhab.core.thing.ThingUID;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.google.gson.Gson;
 
@@ -37,8 +35,6 @@ import com.google.gson.Gson;
  */
 @NonNullByDefault
 public class ComponentFactory {
-    private static final Logger LOGGER = LoggerFactory.getLogger(ComponentFactory.class);
-
     /**
      * Create a HA MQTT component. The configuration JSon string is required.
      *
@@ -55,7 +51,7 @@ public class ComponentFactory {
             Gson gson, TransformationServiceProvider transformationServiceProvider) throws ConfigurationException {
         ComponentConfiguration componentConfiguration = new ComponentConfiguration(thingUID, haID,
                 channelConfigurationJSON, gson, updateListener, tracker, scheduler)
-                        .transformationProvider(transformationServiceProvider);
+                .transformationProvider(transformationServiceProvider);
         switch (haID.component) {
             case "alarm_control_panel":
                 return new AlarmControlPanel(componentConfiguration);
@@ -69,10 +65,16 @@ public class ComponentFactory {
                 return new Fan(componentConfiguration);
             case "climate":
                 return new Climate(componentConfiguration);
+            case "device_automation":
+                return new DeviceTrigger(componentConfiguration);
             case "light":
-                return new Light(componentConfiguration);
+                return Light.create(componentConfiguration);
             case "lock":
                 return new Lock(componentConfiguration);
+            case "number":
+                return new Number(componentConfiguration);
+            case "select":
+                return new Select(componentConfiguration);
             case "sensor":
                 return new Sensor(componentConfiguration);
             case "switch":

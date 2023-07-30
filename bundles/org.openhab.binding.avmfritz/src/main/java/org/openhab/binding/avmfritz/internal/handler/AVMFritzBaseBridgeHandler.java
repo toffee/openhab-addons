@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2010-2022 Contributors to the openHAB project
+ * Copyright (c) 2010-2023 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -79,7 +79,7 @@ public abstract class AVMFritzBaseBridgeHandler extends BaseBridgeHandler {
     /**
      * Refresh interval which is used to poll values from the FRITZ!Box web interface (optional, defaults to 15 s)
      */
-    private long refreshInterval = 15;
+    private long pollingInterval = 15;
 
     /**
      * Interface object for querying the FRITZ!Box web interface
@@ -131,10 +131,10 @@ public abstract class AVMFritzBaseBridgeHandler extends BaseBridgeHandler {
                     "The 'ipAddress' parameter must be configured.");
             configValid = false;
         }
-        refreshInterval = config.pollingInterval;
-        if (refreshInterval < 5) {
+        pollingInterval = config.pollingInterval;
+        if (pollingInterval < 1) {
             updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR,
-                    "The 'pollingInterval' parameter must be greater then at least 5 seconds.");
+                    "The 'pollingInterval' parameter must be greater than or equals to 1 second.");
             configValid = false;
         }
 
@@ -203,8 +203,8 @@ public abstract class AVMFritzBaseBridgeHandler extends BaseBridgeHandler {
     protected void startPolling() {
         ScheduledFuture<?> localPollingJob = pollingJob;
         if (localPollingJob == null || localPollingJob.isCancelled()) {
-            logger.debug("Start polling job at interval {}s", refreshInterval);
-            pollingJob = scheduler.scheduleWithFixedDelay(this::poll, INITIAL_DELAY, refreshInterval, TimeUnit.SECONDS);
+            logger.debug("Start polling job at interval {}s", pollingInterval);
+            pollingJob = scheduler.scheduleWithFixedDelay(this::poll, INITIAL_DELAY, pollingInterval, TimeUnit.SECONDS);
         }
     }
 
@@ -297,13 +297,14 @@ public abstract class AVMFritzBaseBridgeHandler extends BaseBridgeHandler {
      * @return ThingUID without illegal characters.
      */
     public @Nullable ThingUID getThingUID(AVMFritzBaseModel device) {
-        ThingTypeUID thingTypeUID = new ThingTypeUID(BINDING_ID, getThingTypeId(device));
+        String id = getThingTypeId(device);
+        ThingTypeUID thingTypeUID = id.isEmpty() ? null : new ThingTypeUID(BINDING_ID, id);
         ThingUID bridgeUID = thing.getUID();
         String thingName = getThingName(device);
 
-        if (SUPPORTED_BUTTON_THING_TYPES_UIDS.contains(thingTypeUID)
+        if (thingTypeUID != null && (SUPPORTED_BUTTON_THING_TYPES_UIDS.contains(thingTypeUID)
                 || SUPPORTED_HEATING_THING_TYPES.contains(thingTypeUID)
-                || SUPPORTED_DEVICE_THING_TYPES_UIDS.contains(thingTypeUID)) {
+                || SUPPORTED_DEVICE_THING_TYPES_UIDS.contains(thingTypeUID))) {
             return new ThingUID(thingTypeUID, bridgeUID, thingName);
         } else if (device.isHeatingThermostat()) {
             return new ThingUID(GROUP_HEATING_THING_TYPE, bridgeUID, thingName);
