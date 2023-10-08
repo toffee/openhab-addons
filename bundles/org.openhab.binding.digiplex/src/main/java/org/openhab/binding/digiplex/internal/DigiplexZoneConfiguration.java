@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2010-2023 Contributors to the openHAB project
+ * Copyright (c) 2010-2021 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -13,13 +13,11 @@
 package org.openhab.binding.digiplex.internal;
 
 /**
- * The {@link DigiplexAreaConfiguration} class contains fields mapping area configuration parameters.
+ * The {@link DigiplexZoneConfiguration} class contains fields mapping zone configuration parameters.
  *
- * @author Robert Michalak - Initial contribution
+ * @author Olivian Daniel Tofan - Add zone configuration to things configured from file
  */
-public class DigiplexAreaConfiguration {
+public class DigiplexZoneConfiguration {
 
-    public int refreshPeriod;
-
-    public int areaNo;
+    public int zoneNo;
 }
