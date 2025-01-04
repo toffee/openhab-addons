@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2010-2024 Contributors to the openHAB project
+ * Copyright (c) 2010-2025 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -12,7 +12,9 @@
  */
 package org.openhab.binding.evcc.internal.api.dto;
 
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import com.google.gson.annotations.SerializedName;
 
@@ -219,7 +221,12 @@ public class Result {
     }
 
     public Map<String, Vehicle> getVehicles() {
-        return vehicles;
+        Map<String, Vehicle> correctedMap = new HashMap<>();
+        for (Entry<String, Vehicle> entry : vehicles.entrySet()) {
+            // The key from the vehicles map is used as uid, so it should not contain semicolons.
+            correctedMap.put(entry.getKey().replace(":", "-"), entry.getValue());
+        }
+        return correctedMap;
     }
 
     /**

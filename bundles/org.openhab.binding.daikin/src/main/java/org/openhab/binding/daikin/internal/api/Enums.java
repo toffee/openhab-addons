@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2010-2024 Contributors to the openHAB project
+ * Copyright (c) 2010-2025 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -129,7 +129,6 @@ public class Enums {
         HEAT("heat"),
         OFF("off");
 
-        private static final Logger LOGGER = LoggerFactory.getLogger(HomekitMode.class);
         private final String value;
 
         HomekitMode(String value) {

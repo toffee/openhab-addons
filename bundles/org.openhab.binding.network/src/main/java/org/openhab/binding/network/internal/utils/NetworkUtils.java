@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2010-2024 Contributors to the openHAB project
+ * Copyright (c) 2010-2025 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -446,7 +446,8 @@ public class NetworkUtils {
     public void wakeUpIOS(InetAddress address) throws IOException {
         int port = 5353;
         try (DatagramSocket s = new DatagramSocket()) {
-            byte[] buffer = new byte[0];
+            // Send a valid mDNS packet (12 bytes of zeroes)
+            byte[] buffer = new byte[12];
             s.send(new DatagramPacket(buffer, buffer.length, address, port));
             logger.trace("Sent packet to {}:{} to wake up iOS device", address, port);
         } catch (PortUnreachableException e) {

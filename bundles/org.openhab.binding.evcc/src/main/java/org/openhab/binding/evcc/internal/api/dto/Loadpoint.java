@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2010-2024 Contributors to the openHAB project
+ * Copyright (c) 2010-2025 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -271,7 +271,7 @@ public class Loadpoint {
      * @return vehicle's title/name
      */
     public String getVehicleName() {
-        return vehicleName;
+        return vehicleName != null ? vehicleName.replace(":", "-") : vehicleName;
     }
 
     /**

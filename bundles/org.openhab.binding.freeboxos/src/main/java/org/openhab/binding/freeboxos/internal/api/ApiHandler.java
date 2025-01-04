@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2010-2024 Contributors to the openHAB project
+ * Copyright (c) 2010-2025 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -69,7 +69,7 @@ public class ApiHandler {
     private final HttpClient httpClient;
     private final Gson gson;
 
-    private long timeoutInMs = TimeUnit.SECONDS.toMillis(8);
+    private long timeoutInMs = TimeUnit.SECONDS.toMillis(10);
 
     public ApiHandler(HttpClientFactory httpClientFactory, TimeZoneProvider timeZoneProvider) {
         this.gson = new GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)

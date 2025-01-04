@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2010-2024 Contributors to the openHAB project
+ * Copyright (c) 2010-2025 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -15,17 +15,17 @@ package org.openhab.binding.mqtt.homeassistant.internal.component;
 import java.util.concurrent.ScheduledExecutorService;
 
 import org.eclipse.jdt.annotation.NonNullByDefault;
-import org.eclipse.jdt.annotation.Nullable;
 import org.openhab.binding.mqtt.generic.AvailabilityTracker;
 import org.openhab.binding.mqtt.generic.ChannelStateUpdateListener;
-import org.openhab.binding.mqtt.generic.TransformationServiceProvider;
 import org.openhab.binding.mqtt.homeassistant.internal.HaID;
 import org.openhab.binding.mqtt.homeassistant.internal.config.dto.AbstractChannelConfiguration;
 import org.openhab.binding.mqtt.homeassistant.internal.exception.ConfigurationException;
 import org.openhab.binding.mqtt.homeassistant.internal.exception.UnsupportedComponentException;
+import org.openhab.core.i18n.UnitProvider;
 import org.openhab.core.thing.ThingUID;
 
 import com.google.gson.Gson;
+import com.hubspot.jinjava.Jinjava;
 
 /**
  * A factory to create HomeAssistant MQTT components. Those components are specified at:
@@ -48,46 +48,58 @@ public class ComponentFactory {
      */
     public static AbstractComponent<?> createComponent(ThingUID thingUID, HaID haID, String channelConfigurationJSON,
             ChannelStateUpdateListener updateListener, AvailabilityTracker tracker, ScheduledExecutorService scheduler,
-            Gson gson, TransformationServiceProvider transformationServiceProvider, boolean newStyleChannels)
-            throws ConfigurationException {
+            Gson gson, Jinjava jinjava, UnitProvider unitProvider) throws ConfigurationException {
         ComponentConfiguration componentConfiguration = new ComponentConfiguration(thingUID, haID,
-                channelConfigurationJSON, gson, updateListener, tracker, scheduler)
-                .transformationProvider(transformationServiceProvider);
+                channelConfigurationJSON, gson, jinjava, updateListener, tracker, scheduler, unitProvider);
         switch (haID.component) {
             case "alarm_control_panel":
-                return new AlarmControlPanel(componentConfiguration, newStyleChannels);
+                return new AlarmControlPanel(componentConfiguration);
             case "binary_sensor":
-                return new BinarySensor(componentConfiguration, newStyleChannels);
+                return new BinarySensor(componentConfiguration);
             case "button":
-                return new Button(componentConfiguration, newStyleChannels);
+                return new Button(componentConfiguration);
             case "camera":
-                return new Camera(componentConfiguration, newStyleChannels);
-            case "cover":
-                return new Cover(componentConfiguration, newStyleChannels);
-            case "fan":
-                return new Fan(componentConfiguration, newStyleChannels);
+                return new Camera(componentConfiguration);
             case "climate":
-                return new Climate(componentConfiguration, newStyleChannels);
+                return new Climate(componentConfiguration);
+            case "cover":
+                return new Cover(componentConfiguration);
             case "device_automation":
-                return new DeviceTrigger(componentConfiguration, newStyleChannels);
+                return new DeviceTrigger(componentConfiguration);
+            case "device_tracker":
+                return new DeviceTracker(componentConfiguration);
+            case "event":
+                return new Event(componentConfiguration);
+            case "fan":
+                return new Fan(componentConfiguration);
+            case "humidifier":
+                return new Humidifier(componentConfiguration);
             case "light":
-                return Light.create(componentConfiguration, newStyleChannels);
+                return Light.create(componentConfiguration);
             case "lock":
-                return new Lock(componentConfiguration, newStyleChannels);
+                return new Lock(componentConfiguration);
             case "number":
-                return new Number(componentConfiguration, newStyleChannels);
+                return new Number(componentConfiguration);
             case "scene":
-                return new Scene(componentConfiguration, newStyleChannels);
+                return new Scene(componentConfiguration);
             case "select":
-                return new Select(componentConfiguration, newStyleChannels);
+                return new Select(componentConfiguration);
             case "sensor":
-                return new Sensor(componentConfiguration, newStyleChannels);
+                return new Sensor(componentConfiguration);
             case "switch":
-                return new Switch(componentConfiguration, newStyleChannels);
+                return new Switch(componentConfiguration);
+            case "tag":
+                return new Tag(componentConfiguration);
+            case "text":
+                return new Text(componentConfiguration);
             case "update":
-                return new Update(componentConfiguration, newStyleChannels);
+                return new Update(componentConfiguration);
             case "vacuum":
-                return new Vacuum(componentConfiguration, newStyleChannels);
+                return new Vacuum(componentConfiguration);
+            case "valve":
+                return new Valve(componentConfiguration);
+            case "water_heater":
+                return new WaterHeater(componentConfiguration);
             default:
                 throw new UnsupportedComponentException("Component '" + haID + "' is unsupported!");
         }
@@ -100,8 +112,9 @@ public class ComponentFactory {
         private final ChannelStateUpdateListener updateListener;
         private final AvailabilityTracker tracker;
         private final Gson gson;
+        private final Jinjava jinjava;
         private final ScheduledExecutorService scheduler;
-        private @Nullable TransformationServiceProvider transformationServiceProvider;
+        private final UnitProvider unitProvider;
 
         /**
          * Provide a thingUID and HomeAssistant topic ID to determine the channel group UID and type.
@@ -111,22 +124,18 @@ public class ComponentFactory {
          * @param configJSON The configuration string
          * @param gson A Gson instance
          */
-        protected ComponentConfiguration(ThingUID thingUID, HaID haID, String configJSON, Gson gson,
+        protected ComponentConfiguration(ThingUID thingUID, HaID haID, String configJSON, Gson gson, Jinjava jinjava,
                 ChannelStateUpdateListener updateListener, AvailabilityTracker tracker,
-                ScheduledExecutorService scheduler) {
+                ScheduledExecutorService scheduler, UnitProvider unitProvider) {
             this.thingUID = thingUID;
             this.haID = haID;
             this.configJSON = configJSON;
             this.gson = gson;
+            this.jinjava = jinjava;
             this.updateListener = updateListener;
             this.tracker = tracker;
             this.scheduler = scheduler;
-        }
-
-        public ComponentConfiguration transformationProvider(
-                TransformationServiceProvider transformationServiceProvider) {
-            this.transformationServiceProvider = transformationServiceProvider;
-            return this;
+            this.unitProvider = unitProvider;
         }
 
         public ThingUID getThingUID() {
@@ -145,13 +154,16 @@ public class ComponentFactory {
             return updateListener;
         }
 
-        @Nullable
-        public TransformationServiceProvider getTransformationServiceProvider() {
-            return transformationServiceProvider;
-        }
-
         public Gson getGson() {
             return gson;
+        }
+
+        public Jinjava getJinjava() {
+            return jinjava;
+        }
+
+        public UnitProvider getUnitProvider() {
+            return unitProvider;
         }
 
         public AvailabilityTracker getTracker() {
