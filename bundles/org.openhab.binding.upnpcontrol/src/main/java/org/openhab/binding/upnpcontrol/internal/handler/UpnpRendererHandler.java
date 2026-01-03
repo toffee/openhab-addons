@@ -1,5 +1,5 @@
-/**
- * Copyright (c) 2010-2025 Contributors to the openHAB project
+/*
+ * Copyright (c) 2010-2026 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -1086,6 +1086,8 @@ public class UpnpRendererHandler extends UpnpHandler {
                     break;
                 case "CurrentTrackMetaData":
                 case "CurrentURIMetaData":
+                case "TrackMetaData": // Some (non-compliant) renderers emit TrackMetaData instead of
+                                      // CurrentTrackMetaData/CurrentURIMetaData
                     onValueReceivedCurrentMetaData(value);
                     break;
                 case "NextAVTransportURIMetaData":
@@ -1111,6 +1113,10 @@ public class UpnpRendererHandler extends UpnpHandler {
             UpnpRenderingControlConfiguration config = renderingControlConfiguration;
 
             long volume = Long.valueOf(value);
+            if (volume < 0) {
+                logger.warn("UPnP device {} received invalid volume value {}", thing.getLabel(), value);
+                return;
+            }
             volume = volume * 100 / config.maxvolume;
 
             String upnpChannel = variable.replace("Volume", "volume").replace("Master", "");

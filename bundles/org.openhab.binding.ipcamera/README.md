@@ -13,7 +13,6 @@ To see what features each brand has implemented from their APIs, please see this
 - Check this readme for any setup steps for your brand.
 - Check if the camera is offline, if so there will be a reason listed.
 - Always look at the log files with TRACE enabled, as any FFmpeg and camera errors may not reach the INFO logs.
-To enable TRACE logging, enter this in the openHAB console `log:set TRACE org.openhab.binding.ipcamera`.
 - Search the forum using any log messages to find how others have already solved it.
 - Only after doing the above ask for help in the forum and create a new thread.
 
@@ -33,7 +32,7 @@ Some cameras allow the key frame to be created every second or a different amoun
 
 ### ESP32 Cameras
 
-These cameras do not have the ability to create H.264 streams and hence can not be used with HLS, however all other features should work.
+These cameras do not have the ability to create H.264 streams and hence cannot be used with HLS, however all other features should work.
 Due to many custom firmwares available, you may need to ask the firmware developer what the URLs are for snapshots and MJPEG streams if they have changed the defaults from what the Arduino IDE sample code uses.
 Another limitation is that they can only provide a single stream at a time, so you need to setup the `ffmpegInput` to use the ipcamera.mjpeg feed from the openHAB server and change `ffmpegInputOptions` to "-f mjpeg" so FFmpeg knows the input is MJPEG format and not H.264.
 
@@ -42,7 +41,6 @@ Example:
 ```java
 Thing ipcamera:generic:Esp32Cam
 [
-    ipAddress="192.168.1.181",
     gifPreroll=1,
     snapshotUrl="http://192.168.1.181/capture",
     mjpegUrl="http://192.168.1.181:81/stream",
@@ -54,7 +52,7 @@ Thing ipcamera:generic:Esp32Cam
 
 ### Amcrest
 
-It is better to always setup your Amcrest camera as a `dahua` thing type.
+It is better to always setup your Amcrest camera as a `dahua` Thing type.
 The old alarm polling based method is used if you setup as `amcrest`, and the newer/better event based method is used if you setup as `dahua` instead.
 All other features should be the same between the two.
 
@@ -139,21 +137,21 @@ The discovery feature of openHAB can be used to find and setup ONVIF cameras.
 This method should be preferred as it will discover the cameras IP, ports and URLs for you, making the setup much easier.
 The binding needs to use UDP port 3702 to discover the cameras with, so this port needs to be unblocked by your firewall or add the camera manually if the camera is not auto found.
 To use the discovery, just press the `+` icon located in the Inbox, then select the IpCamera binding from the list of installed bindings.
-The binding will only search using openHAB's currently selected primary network address, see <https://www.openhab.org/docs/settings/>.
+The binding will only search using openHAB's currently selected primary network address.
 If your camera is not found after a few searches, it may not be ONVIF and in this case you will need to manually add the camera via the UI.
-Cameras that are not ONVIF should be added as a `generic` thing type and you will need to provide the URLs manually.
+Cameras that are not ONVIF should be added as a `generic` Thing type and you will need to provide the URLs manually.
 
 ## Supported Things
 
 If using openHAB's textual configuration, or when needing to setup HABpanel/sitemaps, you may need to know what your camera is as a "thing type".
 
-Example: The thing type for a camera with no ONVIF support is "generic".
+Example: The Thing type for a camera with no ONVIF support is "generic".
 
 | Thing Type ID | Description |
 |-|-|
 | `generic` | For any camera that is not ONVIF compatible, yet has working RTSP or HTTP URLs. |
 | `onvif` | Use for all ONVIF cameras that do not have an API. |
-| `amcrest` | Only use for if your Amcrest cameras wont work as a `dahua` thing. This uses an older polling based method for alarms that is not as efficient as the newer method used in `dahua`. Amcrest are made by Dahua and hence the API is similar. |
+| `amcrest` | Only use for if your Amcrest cameras wont work as a `dahua` Thing. This uses an older polling based method for alarms that is not as efficient as the newer method used in `dahua`. Amcrest are made by Dahua and hence the API is similar. |
 | `dahua` | Use for all Dahua and Amcrest cameras that support the API. |
 | `doorbird` | Use for all current Doorbird cameras as they support an API as well as ONVIF. |
 | `foscam` | Use for all current Foscam HD cameras as they support an API as well as ONVIF. |
@@ -210,7 +208,7 @@ If you do not specify any of these, the binding will use the default which shoul
 | `ipWhitelist`| Enter any IPs inside brackets that you wish to allow to access the video stream. `DISABLE` the default value will turn this feature off.  Example: `ipWhitelist="(127.0.0.1)(192.168.0.99)"` |
 | `ptzContinuous`| If set to false (default) the camera will move using Relative commands, If set to true the camera will instead use continuous movements and will require an `OFF` command to stop the movement. |
 | `onvifEventServiceType`| ONVIF event method to use. If camera does not report event capabilities, the event method can be forced here. |
-| | `0` - Auto detect event capabilities. (Default) ONVIF event capabilities are detected automatically. PullMessages is prefered over WSBaseNotification because there is no way to determine if an WSBaseNotification subscription exists on startup. |
+| | `0` - Auto detect event capabilities. (Default) ONVIF event capabilities are detected automatically. PullMessages is preferred over WSBaseNotification because there is no way to determine if an WSBaseNotification subscription exists on startup. |
 | | `1` - ONVIF events disabled. |
 | | `2` - Force ONVIF PullMessages event method even if the camera does not claim to support this. |
 | | `3` - Force ONVIF WSBaseSubscription event method even if the camera does not claim to support this. |
@@ -231,6 +229,7 @@ The channels are kept consistent as much as possible from brand to brand to make
 | `autoWhiteLED`              | Switch | RW         | When ON this sets a cameras visible white LED to automatically turn on or off.                                                                                                                                                                                                                                                     |
 | `carAlarm`                  | Switch | RW         | When a car is detected the switch will turn ON.                                                                                                                                                                                                                                                                                    |
 | `cellMotionAlarm`           | Switch | R          | ONVIF cameras only will reflect the status of the ONVIF event of the same name.                                                                                                                                                                                                                                                    |
+| `createSnapshots` | Switch | RW | This control can be used to manually start and stop using your openHAB CPU to create snapshots from a RTSP source with FFmpeg. |
 | `doorBell`                  | Switch | R          | Doorbird only, will reflect the status of the doorbell button.                                                                                                                                                                                                                                                                     |
 | `enableAudioAlarm`          | Switch | RW         | Allows the audio alarm to be turned ON or OFF.                                                                                                                                                                                                                                                                                     |
 | `enableEmail`               | Switch | RW         | Allows the email features to be turned ON or OFF.                                                                                                                                                                                                                                                                                  |
@@ -284,7 +283,7 @@ The channels are kept consistent as much as possible from brand to brand to make
 | `tooBlurryAlarm`            | Switch | R          | ONVIF cameras only will reflect the status of the ONVIF event of the same name.                                                                                                                                                                                                                                                    |
 | `tooBrightAlarm`            | Switch | R          | ONVIF cameras only will reflect the status of the ONVIF event of the same name.                                                                                                                                                                                                                                                    |
 | `tooDarkAlarm`              | Switch | R          | ONVIF cameras only will reflect the status of the ONVIF event of the same name.                                                                                                                                                                                                                                                    |
-| `pollImage`                 | Switch | RW         | This control can be used to manually start and stop using your CPU to create snapshots from a RTSP source. If you have a snapshot URL setup in the binding, only then can this control can be used to update the Image channel.                                                                                                    |
+| `pollImage`                 | Switch | RW         | This control can be used to start and stop updating the Image channel.                                                                                                    |
 | `whiteLED`                  | Dimmer | RW         | Turn the visible white LED ON or OFF and if supported dim from 0-100%.                                                                                                                                                                                                                                                             |
 | `zoom`                      | Dimmer | RW         | Works with ONVIF cameras that can be moved.                                                                                                                                                                                                                                                                                        |
 | `acceptedCardNumber`        | String | R          | This channel shows the last accepted access card number that opened the door. The channel doesn't show rejected/unauthorized cards.                                                                                                                                                                                                |
@@ -397,7 +396,7 @@ This is always the best option if it works.
 - Request a snapshot with the URL `http://openhabIP:8080/ipcamera/{cameraUID}/ipcamera.jpg`.
 The IP is for your openHAB server not the camera.
 If you find the snapshot is old, you can set the `gifPreroll` to a number above 0 and this forces the camera to keep updating the stored JPG in RAM.
-The ipcamera.jpg can also be cast, as most cameras can not directly cast their snapshots.
+The ipcamera.jpg can also be cast, as most cameras cannot directly cast their snapshots.
 - Use the `http://openHAB:8080/ipcamera/{cameraUID}/snapshots.mjpeg` to request a stream of snapshots to be delivered in MJPEG format.
 - Use the record GIF action and use a `gifPreroll` value > 0.
 This creates a number of snapshots in the FFmpeg output folder called snapshotXXX.jpg where XXX starts at 0 and increases each `pollTime`.
@@ -613,7 +612,7 @@ Webview url="http://192.168.6.4:8080/static/html/file.html" height=5
 There are two ways to cast a camera.
 
 1. openHAB Cloud Connector and using metadata/tags.
-2. Chromecast Bindings `playuri` channel.
+1. Chromecast Bindings `playuri` channel.
 
 The first method once setup allows you to ask "OK Google show X camera", or "OK Google show X camera on Y display".
 By optionally naming the display that you wish to use, it can be cast directly to your Chromecast (connected to your TV) by speaking to a Google Nest Mini.
@@ -703,6 +702,17 @@ then
 end
 ```
 
+## How To Reboot Camera
+
+```java
+rule "Reboot Camera At 12:00 AM"
+when
+    Time cron "0 0 0 ? *"
+then
+  getActions("ipcamera", "ipcamera:reolink:1a40bbe041").reboot()
+end
+```
+
 ## HABpanel
 
 This section is about how to get things working in HABpanel.
@@ -714,7 +724,7 @@ The widgets in the link above are the easiest way to get an advanced stream work
 
 ## Group Displays
 
-The `group` thing allows up to 4 cameras to be displayed like they are a single camera that rotates from one to the next.
+The `group` Thing allows up to 4 cameras to be displayed like they are a single camera that rotates from one to the next.
 The display order can be allowed to change if one or more of the cameras detects motion.
 
 Some additional checks to get it working are:

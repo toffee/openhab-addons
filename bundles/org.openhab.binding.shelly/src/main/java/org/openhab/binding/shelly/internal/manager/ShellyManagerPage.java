@@ -1,5 +1,5 @@
-/**
- * Copyright (c) 2010-2025 Contributors to the openHAB project
+/*
+ * Copyright (c) 2010-2026 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -13,7 +13,7 @@
 package org.openhab.binding.shelly.internal.manager;
 
 import static org.openhab.binding.shelly.internal.ShellyBindingConstants.*;
-import static org.openhab.binding.shelly.internal.discovery.ShellyThingCreator.*;
+import static org.openhab.binding.shelly.internal.ShellyDevices.*;
 import static org.openhab.binding.shelly.internal.manager.ShellyManagerConstants.*;
 import static org.openhab.binding.shelly.internal.util.ShellyUtils.*;
 import static org.openhab.core.thing.Thing.*;
@@ -413,7 +413,7 @@ public class ShellyManagerPage {
             fw = fromJson(gson, entry, FwRepoEntry.class);
 
             // Special case: RGW2 has a split firmware - xxx-white.zip vs. xxx-color.zip
-            if (!mode.isEmpty() && deviceType.equalsIgnoreCase(SHELLYDT_RGBW2)) {
+            if (SHELLYDT_RGBW2.equalsIgnoreCase(deviceType) && !mode.isEmpty()) {
                 // check for spilt firmware
                 String url = substringBefore(fw.url, ".zip") + "-" + mode + ".zip";
                 if (testUrl(url)) {
@@ -558,13 +558,19 @@ public class ShellyManagerPage {
         return option.toString();
     }
 
-    protected static String getDisplayName(Map<String, String> properties) {
+    protected static String getDisplayName(Map<String, String> properties, Thing thing) {
         String name = getString(properties.get(PROPERTY_DEV_NAME));
         if (name.isEmpty()) {
             name = getString(properties.get(PROPERTY_SERVICE_NAME));
         }
         if (name.isEmpty()) {
             name = getString(properties.get(PROPERTY_MAC_ADDRESS));
+        }
+        if (name.isEmpty()) {
+            name = thing.getLabel();
+        }
+        if (name == null || name.isEmpty()) {
+            name = thing.getUID().getId();
         }
         return name;
     }

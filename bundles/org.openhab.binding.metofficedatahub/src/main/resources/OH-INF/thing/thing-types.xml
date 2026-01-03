@@ -8,6 +8,7 @@
 
 		<label>MetOffice DataHub Account</label>
 		<description>MetOffice DataHub API Account</description>
+		<semantic-equipment-tag>WeatherService</semantic-equipment-tag>
 
 		<properties>
 			<property name="Site Specific API Call Count"/>
@@ -25,6 +26,12 @@
 				<default>250</default>
 				<advanced>true</advanced>
 			</parameter>
+			<parameter name="disableKeyValidation" type="boolean">
+				<label>Disable Key Validation</label>
+				<description>If enabled, the binding will skip validation of the key format</description>
+				<default>false</default>
+				<advanced>true</advanced>
+			</parameter>
 		</config-description>
 	</bridge-type>
 
@@ -36,6 +43,7 @@
 
 		<label>Forecast Data</label>
 		<description>Site Specific forecast data</description>
+		<semantic-equipment-tag>WeatherService</semantic-equipment-tag>
 
 		<channel-groups>
 			<channel-group id="current-forecast" typeId="site-hr-forecast-grp">

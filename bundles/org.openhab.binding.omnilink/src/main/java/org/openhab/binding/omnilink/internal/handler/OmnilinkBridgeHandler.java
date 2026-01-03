@@ -1,5 +1,5 @@
-/**
- * Copyright (c) 2010-2025 Contributors to the openHAB project
+/*
+ * Copyright (c) 2010-2026 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -164,6 +164,7 @@ public class OmnilinkBridgeHandler extends BaseBridgeHandler implements Notifica
         try {
             getOmniConnection().setTimeCommand(zdt.getYear() - 2000, zdt.getMonthValue(), zdt.getDayOfMonth(),
                     zdt.getDayOfWeek().getValue(), zdt.getHour(), zdt.getMinute(), inDaylightSavings);
+            getSystemStatus();
         } catch (IOException | OmniNotConnectedException | OmniInvalidResponseException
                 | OmniUnknownMessageTypeException e) {
             logger.debug("Could not send set date time command to OmniLink Controller: {}", e.getMessage());
@@ -236,8 +237,8 @@ public class OmnilinkBridgeHandler extends BaseBridgeHandler implements Notifica
                     config.getKey1() + ":" + config.getKey2());
 
             /*
-             * HAI only supports one audio player - cycle through features until we find a feature that is an audio
-             * player.
+             * HAI only supports one audio player - cycle through features until we find a
+             * feature that is an audio player.
              */
             audioPlayer = Objects.requireNonNull(
                     reqSystemFeatures().getFeatures().stream().map(AudioPlayer::getAudioPlayerForFeatureCode)
@@ -631,7 +632,10 @@ public class OmnilinkBridgeHandler extends BaseBridgeHandler implements Notifica
     }
 
     private void pollEvents() {
-        // On first run, direction is -1 (most recent event), after its 1 for the next log message
+        /*
+         * On first run, direction is -1 (most recent event), after its 1 for the next
+         * log message
+         */
         try {
             Message message;
             do {

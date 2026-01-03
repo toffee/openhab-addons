@@ -1,5 +1,5 @@
-/**
- * Copyright (c) 2010-2025 Contributors to the openHAB project
+/*
+ * Copyright (c) 2010-2026 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -36,13 +36,13 @@ import org.openhab.core.library.unit.SIUnits;
 import org.openhab.core.library.unit.Units;
 import org.openhab.core.util.ColorUtil;
 
-import tuwien.auto.calimero.dptxlator.DPTXlator2ByteUnsigned;
-import tuwien.auto.calimero.dptxlator.DPTXlator4ByteFloat;
-import tuwien.auto.calimero.dptxlator.DPTXlator4ByteSigned;
-import tuwien.auto.calimero.dptxlator.DPTXlator4ByteUnsigned;
-import tuwien.auto.calimero.dptxlator.DPTXlator64BitSigned;
-import tuwien.auto.calimero.dptxlator.DPTXlator8BitSigned;
-import tuwien.auto.calimero.dptxlator.DptXlator2ByteSigned;
+import io.calimero.dptxlator.DPTXlator2ByteUnsigned;
+import io.calimero.dptxlator.DPTXlator4ByteFloat;
+import io.calimero.dptxlator.DPTXlator4ByteSigned;
+import io.calimero.dptxlator.DPTXlator4ByteUnsigned;
+import io.calimero.dptxlator.DPTXlator64BitSigned;
+import io.calimero.dptxlator.DPTXlator8BitSigned;
+import io.calimero.dptxlator.DptXlator2ByteSigned;
 
 /**
  *
@@ -200,6 +200,14 @@ class DPTTest {
         ValueEncoder.encode(new QuantityType<>("1"), "9.030");
         // wrong unit
         ValueEncoder.encode(new QuantityType<>("1 kg"), "9.030");
+
+        // MEEE EMMM MMMM MMMM
+        // "the encoded value 7FFFh shall always be used to denote invalid data"
+        // ETS sends 0x7fff if NaN is sent via diagnostics
+        // approach is to ignore data, same as for NaN with DPT14
+        // -> should return null and do not throw an exception
+        assertNull(ValueDecoder.decode("9.001", new byte[] { (byte) 0x7f, (byte) 0xff }, QuantityType.class));
+        assertNull(ValueDecoder.decode("9.001", new byte[] { (byte) 0x7f, (byte) 0xff }, DecimalType.class));
     }
 
     @Test
@@ -344,6 +352,26 @@ class DPTTest {
 
         assertEquals("1", ValueEncoder.encode(new QuantityType<>("1 m³/h"), "14.1200"));
         assertEquals("1", ValueEncoder.encode(new QuantityType<>("1 l/s"), "14.1201"));
+        // IEEE 754 floating point representation, signaling and and non-signaling +/-NAN and +/-INF
+        // -> should return null and do not throw an exception
+        // ETS sends 0xffc00000 if NaN is sent via diagnostics
+        assertNull(ValueDecoder.decode("14.000", new byte[] { (byte) 0xff, (byte) 0xff, (byte) 0xff, (byte) 0xff },
+                QuantityType.class));
+        assertNull(ValueDecoder.decode("14.000", new byte[] { (byte) 0xff, (byte) 0xbf, (byte) 0xff, (byte) 0xff },
+                QuantityType.class));
+        assertNull(ValueDecoder.decode("14.000", new byte[] { (byte) 0x7f, (byte) 0xff, (byte) 0xff, (byte) 0xff },
+                QuantityType.class));
+        assertNull(ValueDecoder.decode("14.000", new byte[] { (byte) 0x7f, (byte) 0xbf, (byte) 0xff, (byte) 0xff },
+                QuantityType.class));
+        assertNull(ValueDecoder.decode("14.000", new byte[] { (byte) 0x7f, (byte) 0x80, 0, 0 }, QuantityType.class));
+        assertNull(ValueDecoder.decode("14.000", new byte[] { (byte) 0xff, (byte) 0x80, 0, 0 }, QuantityType.class));
+        // same for DecimalType
+        assertNull(ValueDecoder.decode("14.000", new byte[] { (byte) 0xff, (byte) 0xff, (byte) 0xff, (byte) 0xff },
+                DecimalType.class));
+        // and for dimensionless
+        assertNull(ValueDecoder.decode("14.057", new byte[] { (byte) 0xff, (byte) 0x80, 0, 0 }, QuantityType.class));
+        assertNull(ValueDecoder.decode("14.057", new byte[] { (byte) 0xff, (byte) 0xff, (byte) 0xff, (byte) 0xff },
+                DecimalType.class));
     }
 
     @Test
