@@ -144,9 +144,16 @@ public class ProheatThingHandler extends BaseThingHandler {
         SerialPort serialPort = portId.open(getThing().getUID().toString(), 2000);
         serialPort.setSerialPortParams(config.baudrate, SerialPort.DATABITS_8, SerialPort.STOPBITS_1,
                 SerialPort.PARITY_NONE);
+        // CRITICAL: Disable all flow control (Proheat HCC-02 usually needs this)
+        serialPort.setFlowControlMode(SerialPort.FLOWCONTROL_NONE);
 
         try {
             ExecCommand.stty("-F " + config.port + " sane");
+            // Force raw mode: no echo, no canonical processing, no special character handling
+            // ExecCommand.stty("-F " + config.port + " raw -echo -echoe -echok -iexten -isig -icanon");
+            // Force absolute raw mode: no canonical processing, no echo, no special char handling
+            // 'min 1 time 0' ensures data is returned as soon as 1 byte is received.
+            // ExecCommand.stty("-F " + config.port + " raw -echo -echoe -echok -iexten -isig -icanon min 1 time 0");
         } catch (IOException ioe) {
             logger.info("TTY failed with: {}", ioe.getMessage());
         } catch (InterruptedException e) {
@@ -401,6 +408,12 @@ public class ProheatThingHandler extends BaseThingHandler {
             while (!interrupted()) {
                 try {
                     Optional<String> message = readLineBlocking();
+                    // on openhab console enable debuging for this binding
+                    // log:set DEBUG org.openhab.binding.proheat
+                    // since 03.01.2026 seems that device does not return the messages
+                    // as expected on serial. Only ^KA9 are seen on cat /dev/ttyOpenHanSnow
+                    // even when manually/physically changing the state on device
+                    logger.debug("ProheatReceiverThread.run message {}", message);
                     // ignore beat data
                     if (message.equals(Optional.of(HEADER_BEAT))) {
                         continue;
@@ -425,7 +438,9 @@ public class ProheatThingHandler extends BaseThingHandler {
         private Optional<String> readLineBlocking() throws IOException {
             StringBuilder s = new StringBuilder();
             while (true) {
+                // logger.debug("readLineBlocking wait for read");
                 int c = stream.read();
+                // logger.debug("readLineBlocking Read: char='{}' (int={})", (char) c, c);
                 if (c == END_OF_STREAM) {
                     return Optional.empty();
                 }
