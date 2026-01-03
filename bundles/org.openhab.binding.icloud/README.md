@@ -14,6 +14,7 @@ You will need to provide the account password to the Binding.
 
 An iCloud account can be added as a Thing and needs to be configured with your ID and password.
 The devices registered to this account will then be automatically discovered.
+If not, it might be necessary to log in to <https://www.icloud.com/> and accept the terms of use, verify account security settings, or complete any pending account setup steps.
 
 ## Binding Configuration
 
@@ -30,9 +31,9 @@ The account can be connected to multiple Apple devices which are represented as 
 You may create multiple account Things for multiple accounts.
 
 If your Apple account has 2-factor-authentication enabled configuration requires two steps.
-First start by adding the Apple ID and password to your account thing configuration.
+First start by adding the Apple ID and password to your account Thing configuration.
 You will receive a notification with a code on one of your Apple devices then.
-Add this code to the code parameter of the thing then and wait.
+Add this code to the code parameter of the Thing then and wait.
 The binding should be reinitialized and perform the authentication.
 
 ### Device Thing
@@ -67,7 +68,7 @@ The following channels are available (if supported by the device):
 
 ### icloud.things
 
-```php
+```java
 Bridge icloud:account:myaccount [appleId="mail@example.com", password="secure", code="123456", refreshTimeInMinutes=5]
 {
     Thing device myiPhone8 "iPhone 8" @ "World" [deviceId="VIRG9FsrvXfE90ewVBA1H5swtwEQePdXVjHq3Si6pdJY2Cjro8QlreHYVGSUzuWV"]
@@ -79,7 +80,7 @@ The information _@ "World"_ is optional.
 
 ### icloud.items
 
-```php
+```java
 Group    iCloud_Group "iPhone"
 
 String   iPhone_BatteryStatus             "Battery Status [%s]"     <battery>   (iCloud_Group) {channel="icloud:device:myaccount:myiPhone8:batteryStatus"}
@@ -94,7 +95,7 @@ Switch   iPhone_Home                      "Phone Home"              <presence>  
 
 ### icloud.sitemap
 
-```php
+```perl
 sitemap icloud label="iCloud" {
     Frame item=iCloud_Group {
         Text item=iPhone_BatteryStatus
@@ -112,7 +113,7 @@ sitemap icloud label="iCloud" {
 
 ### icloud.rules
 
-```php
+```java
 rule "iPhone Home"
 when
     Item iPhone_Location changed

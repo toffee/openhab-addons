@@ -1,10 +1,10 @@
 # MfFan Binding
 
-This binding is used to enable communications between openHAB and "Modern Forms" or "WAC Lighting" WIFI connected, smart, ceiling fans.  
+This binding is used to enable communications between openHAB and "Modern Forms" or "WAC Lighting" WIFI connected, smart, ceiling fans.
 
 ## Supported Things
 
-The binding currently supports the following thing:
+The binding currently supports the following Thing:
 
 | Thing         | ID          |                                                                |
 |---------------|-------------|----------------------------------------------------------------|
@@ -12,7 +12,7 @@ The binding currently supports the following thing:
 
 ## Discovery
 
-Auto discovery is not supported at this time.  
+Auto discovery is not supported at this time.
 
 ## Thing Configuration
 
@@ -32,7 +32,6 @@ Auto discovery is not supported at this time.
 | wind-level       | String                 | RW         | The amount of wind produced.        |
 | light-on         | Switch                 | RW         | Turns the light on/off              |
 | light-intensity  | Number:Dimensionless   | RW         | Controls the intensity of the light |
-
 
 ## Full Example
 

@@ -9,15 +9,16 @@ moment of writing the _Omniksol-3.0k-TL2_ has been tested.
 
 ## Discovery
 
-No autodiscovery available
+No auto-discovery available
 
 ## Thing Configuration
 
-| Config   | Description                                                                                                                    | type    | Default   |
-| :------- | :------------                                                                                                                  | :-----  | :-------- |
-| hostname | The hostname or ip through which the inverter can be accessed                                                                  | string  | n/a       |
-| port     | TCP port through which the inverter listens on for incoming connections                                                        | integer | 8899      |
-| serial   | The serial of the wifi module. The Wifi module's SSID contains the number. This is the numerical part only, i.e. without _AP__ | integer | n/a       |
+| Config          | Description                                                                                                                    | type    | Default |
+|:----------------|:-------------------------------------------------------------------------------------------------------------------------------|:--------|:--------|
+| hostname        | The hostname or ip through which the inverter can be accessed                                                                  | string  | n/a     |
+| port            | TCP port through which the inverter listens on for incoming connections                                                        | integer | 8899    |
+| serial          | The serial of the wifi module. The Wifi module's SSID contains the number. This is the numerical part only, i.e. without _AP__ | integer | n/a     |
+| refreshInterval | Interval the device is polled in seconds.                                                                                      | integer | 10      |
 
 ## Channels
 
@@ -33,9 +34,9 @@ No autodiscovery available
 | currentAC1      | Number:ElectricCurrent   | The current for feed 1 to the grid, in ampere by default                                                         |
 | currentAC2      | Number:ElectricCurrent   | The current for feed 2 to the grid, in ampere by default                                                         |
 | currentAC3      | Number:ElectricCurrent   | The current for feed 3 to the grid, in ampere by default                                                         |
-| frequencyAC1    | Number:Frequency         | The frequrence of feed 1 of the grid, in hertz by default                                                        |
-| frequencyAC2    | Number:Frequency         | The frequrence of feed 2 of the grid, in hertz by default                                                        |
-| frequencyAC3    | Number:Frequency         | The frequrence of feed 3 of the grid, in hertz by default                                                        |
+| frequencyAC1    | Number:Frequency         | The frequency of feed 1 of the grid, in hertz by default                                                         |
+| frequencyAC2    | Number:Frequency         | The frequency of feed 2 of the grid, in hertz by default                                                         |
+| frequencyAC3    | Number:Frequency         | The frequency of feed 3 of the grid, in hertz by default                                                         |
 | currentPV1      | Number:ElectricCurrent   | The current generation for input string 1, in ampere by default                                                  |
 | currentPV2      | Number:ElectricCurrent   | The current generation for input string 2, in ampere by default                                                  |
 | currentPV3      | Number:ElectricCurrent   | The current generation for input string 3, in ampere by default                                                  |
@@ -49,13 +50,13 @@ No autodiscovery available
 
 ## Full Example
 
-### demo.things
+### `demo.things` Example
 
 ```java
 Thing omnikinverter:omnik:70ecb4f0 "Solar Inverter" [ hostname="igen-wifi.lan",serial=604455290]
 ```
 
-### demo.items
+### `demo.items` Example
 
 ```java
 Number:Power OmnikInverterBindingThing_InstantaneousPower "Solar Power" <sun> {channel="omnikinverter:omnik:70ecb4f0:power"}
@@ -72,7 +73,7 @@ Number:Energy OmnikInverterBindingThing_TotalGeneratedEnergyToday "Solar Energy 
 Number:Energy OmnikInverterBindingThing_TotalGeneratedEnergy "Solar Energy Total" {channel="omnikinverter:omnik:70ecb4f0:energyTotal"}
 ```
 
-### Sitemap
+### `demo.sitemap` Example
 
 ```perl
 Text item=OmnikInverterBindingThing_InstantaneousPower

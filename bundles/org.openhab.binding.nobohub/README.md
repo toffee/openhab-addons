@@ -61,7 +61,7 @@ hostName=10.0.0.10
 | activeWeekProfileName        | String             | The name of the active week profile        |
 | activeWeekProfile            | Number             | The active week profile id                 |
 | comfortTemperature           | Number:Temperature | The configured comfort temperature         |
-| ecoTemperature               | Number:Temperature | The configured eco temparature             |
+| ecoTemperature               | Number:Temperature | The configured eco temperature             |
 | currentTemperature           | Number:Temperature | The current temperature in the zone        |
 | calculatedWeekProfileStatus  | String             | The current override based on week profile |
 
@@ -98,7 +98,7 @@ Number:Temperature  PanelHeater_CurrentTemperature  "Setpoint [%.1f °C]"       
 // Zone
 String              Zone_ActiveWeekProfileName      "Active week profile name [%s]"     <calendar>      {channel="nobohub:zone:controller:1:activeWeekProfileName"}
 Number              Zone_ActiveWeekProfile          "Active week profile [%d]"          <calendar>      {channel="nobohub:zone:controller:1:activeWeekProfile"}
-String              Zone_ActiveStatus               "Active status %s]"                 <heating>       {channel="nobohub:zone:controller:1:calculatedWeekProfileStatus"}
+String              Zone_ActiveStatus               "Active status [%s]"                <heating>       {channel="nobohub:zone:controller:1:calculatedWeekProfileStatus"}
 Number:Temperature  Zone_ComfortTemperature         "Comfort temperature [%.1f °C]"     <temperature>   {channel="nobohub:zone:controller:1:comfortTemperature"}
 Number:Temperature  Zone_EcoTemperatur              "Eco temperature [%.1f °C]"         <temperature>   {channel="nobohub:zone:controller:1:ecoTemperature"}
 Number:Temperature  Zone_CurrentTemperature         "Current temperature [%.1f °C]"     <temperature>   {channel="nobohub:zone:controller:1:currentTemperature"}
@@ -115,13 +115,13 @@ sitemap nobo label="Nobø " {
 
     Frame label="Main Bedroom"{
       Switch    item=Zone_ActiveStatus
-      Text      item=Zone_ActiveWeekProfileName           
-      Text      item=Zone_ActiveWeekProfile           
-      Selection item=Zone_ActiveWeekProfile           
-      Setpoint  item=Zone_ComfortTemperatur minValue=7 maxValue=30 step=1 icon="temperature"
-      Setpoint  item=Zone_EcoTemperatur     minValue=7 maxValue=30 step=1 icon="temperature"
-      Text      item=Zone_CurrentTemperatur
-      Text      item=PanelHeater_CurrentTemperatur
+      Text      item=Zone_ActiveWeekProfileName
+      Text      item=Zone_ActiveWeekProfile
+      Selection item=Zone_ActiveWeekProfile
+      Setpoint  item=Zone_ComfortTemperature minValue=7 maxValue=30 step=1 icon="temperature"
+      Setpoint  item=Zone_EcoTemperature     minValue=7 maxValue=30 step=1 icon="temperature"
+      Text      item=Zone_CurrentTemperature
+      Text      item=PanelHeater_CurrentTemperature
     }
 }
 ```
@@ -162,7 +162,7 @@ The binding will now automatically update all available week profile options in 
 sitemap nobo label="Nobø " {
 
     Frame label="Main Bedroom"{
-      Selection item=MainBedroom_Zone_WeekProfile   
+      Selection item=MainBedroom_Zone_WeekProfile
     }
 }
 ```

@@ -1,7 +1,7 @@
 # Hyperion Binding
 
 This binding integrates openHAB with the Hyperion ambient lighting software.
-Further details on the Hyperion project can be found [here.](https://hyperion-project.org/)
+Further details on the Hyperion project can be found on the [Hyperion project website](https://hyperion-project.org/)
 
 ## Supported Things
 
@@ -14,13 +14,14 @@ The binding itself does not require any special configuration.
 
 ## Discovery
 
-Automatic background discovery only works for Hyperion.ng servers as they advertise using mDNS. You must manually configure a Hyperion Server V1 either through a UI / REST or .things file.
+Automatic background discovery only works for Hyperion.ng servers as they advertise using mDNS. You must manually configure a Hyperion Server V1 either through a UI/REST or `.things` file.
 
 ## Thing Configuration
 
 ### Hyperion Server (V1)
 
-In order to use a Hyperion Server it must be properly configured.  You can do this either through a UI / REST or through static .thing files.
+In order to use a Hyperion Server, it must be properly configured.
+You can do this either through a UI/REST or through static `.things` files.
 
 | Parameter      | Data type | Required | Example        |
 |----------------|-----------|----------|----------------|
@@ -31,7 +32,7 @@ In order to use a Hyperion Server it must be properly configured.  You can do th
 
 To manually configure a Hyperion Server you must specify the following parameters: host, port, priority and polling frequency.
 
-In the thing file, this looks for e.g. like
+In the Thing file, this looks for e.g. like
 
 ```java
 Thing hyperion:serverV1:myServer [ host="192.168.0.10", port=19444, priority=50, poll_frequency=15]
@@ -39,7 +40,8 @@ Thing hyperion:serverV1:myServer [ host="192.168.0.10", port=19444, priority=50,
 
 ### Hyperion.ng Server
 
-In order to use a Hyperion.ng Server it must be properly configured.  You can do this either through a UI / REST or through static .thing files.
+In order to use a Hyperion.ng Server, it must be properly configured.
+You can do this either through a UI/REST or through static `.things` files.
 
 | Parameter      | Data type | Required | Example        |
 |----------------|-----------|----------|----------------|
@@ -59,7 +61,7 @@ Thing hyperion:serverNG:myServer [ host="192.168.0.10", port=19444, priority=50,
 
 ## Channels
 
-### Hyperion Server (V1):
+### Hyperion Server (V1)
 
 | Channel    | Item   | Description                                        | Example                               |
 |------------|--------|----------------------------------------------------|---------------------------------------|
@@ -87,9 +89,9 @@ Thing hyperion:serverNG:myServer [ host="192.168.0.10", port=19444, priority=50,
 | v4l             | Switch | Enables or disables the V4L component              | hyperion:serverNG:myServer:v4l             |
 | leddevice       | Switch | Enables or disables the led device component       | hyperion:serverNG:myServer:leddevice       |
 
-## Items:
+## Items
 
-### Hyperion Server (V1):
+### Hyperion Server (V1)
 
 ```java
 Dimmer Brightness "Brightness [%s]" {channel="hyperion:serverV1:myServer:brightness"}
@@ -155,7 +157,7 @@ sitemap demo label="Main Menu" {
     'X-Mas'='X-Mas'
   ]
   Switch item=Clear mappings=[50="Clear"]
-  
+
   // only serverNG
   Switch item=HyperionEnabled
   Switch item=BlackBorderEnabled

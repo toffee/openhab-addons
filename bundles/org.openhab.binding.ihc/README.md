@@ -28,7 +28,7 @@ The `controller` Thing has the following configuration parameters:
 | timeout                     | Timeout in milliseconds to communicate to IHC / ELKO controller.                                                                                                                            | no       | 5000          |
 | loadProjectFile             | Load project file from controller.                                                                                                                                                          | no       | true          |
 | createChannelsAutomatically | Create channels automatically from project file. Project file loading parameter should be enabled as well.                                                                                  | no       | true          |
-| tlsVersion                  | TLS version used for controller communication. Choose `TLSv1` for older firmware versions and `TLSv1.2` for never versions (since fall 2021). `AUTO` mode try to recognize correct version. | no       | TLSv1         |
+| tlsVersion                  | TLS version used for controller communication. Choose `TLSv1` for older firmware versions and `TLSv1.2` for newer versions (since fall 2021). `AUTO` mode try to recognize correct version. | no       | TLSv1         |
 
 ## Channels
 
@@ -154,7 +154,7 @@ ihc:controller:elko [ hostname="192.168.1.2", username="openhab", password="secr
         Type number                : my_test_number  "My Test Number"          [ resourceId=3988827, direction="ReadOnly" ]
         Type rf-device-low-battery : my_low_battery  "My Low Battery Warning"  [ serialNumber=123456789 ]
         Type push-button-trigger   : my_test_trigger "My Test Trigger"         [ resourceId=3988827, longPressTime=1000 ]
-        
+
         Type dimmer                : inc_resource        "Increase resource"   [ resourceId=9000001, direction="WriteOnly", commandToReact="INCREASE", pulseWidth=300 ]
         Type dimmer                : dec_resource        "Decrease resource"   [ resourceId=9000002, direction="WriteOnly", commandToReact="DECREASE", pulseWidth=300 ]
 
@@ -185,14 +185,14 @@ Dimmer dimmer { channel="ihc:controller:elko:my_test_trigger"[profile="ihc:pushb
 ```java
 rule "My test trigger test rule"
 when
-    Channel 'ihc:controller:elko:my_test_trigger' triggered LONG_PRESS 
+    Channel 'ihc:controller:elko:my_test_trigger' triggered LONG_PRESS
 then
     logInfo("Test","Long press detected")
 end
 
 rule "My test trigger test rule 2"
 when
-    Channel 'ihc:controller:elko:my_test_trigger' triggered 
+    Channel 'ihc:controller:elko:my_test_trigger' triggered
 then
     val String e = receivedEvent.toString.split(' ').get(2).toString
     switch e {
@@ -207,4 +207,4 @@ end
 
 ### Thing status
 
-Check thing status for errors.
+Check Thing status for errors.

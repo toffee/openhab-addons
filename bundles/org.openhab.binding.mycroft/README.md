@@ -14,7 +14,7 @@ Possibilies include:
 
 ## Supported Things
 
-The only thing managed by this binding is a Mycroft instance
+The only Thing managed by this binding is a Mycroft instance
 
 |   Thing Type ID    |            Description                                                     |
 |--------------------|----------------------------------------------------------------------------|
@@ -41,7 +41,7 @@ Thing mycroft:mycroft:myMycroft "Mycroft A.I." @ "Living Room" [host="192.168.X.
 
 ## Channels
 
-A Mycroft thing has the following channels:
+A Mycroft Thing has the following channels:
 
 | channel type id              | Item type | description                                                                                    |
 |------------------------------|-----------|------------------------------------------------------------------------------------------------|
@@ -50,7 +50,7 @@ A Mycroft thing has the following channels:
 | utterance                    | String    | The last utterance Mycroft receive                                                             |
 | player                       | Player    | The music player Mycroft is currently controlling                                              |
 | volume_mute                  | Switch    | Mute the Mycroft speaker                                                                       |
-| volume                       | Dimmer    | The volume of the Mycroft speaker. (Note : Value unreliable until a volume change occured)     |
+| volume                       | Dimmer    | The volume of the Mycroft speaker. (Note: Value unreliable until a volume change occurred)     |
 | full_message                 | String    | The last message (full json) seen on the Mycroft Bus. Filtered by the messageTypes properties  |
 
 The channel 'full_message' has the following configuration available:
@@ -64,7 +64,7 @@ The channel 'full_message' has the following configuration available:
 A manual setup through a `things/mycroft.things` file could look like this:
 
 ```java
-Thing mycroft:mycroft:myMycroft "Mycroft A.I." @ "Living Room" [host="192.168.X.X", port=8181] { 
+Thing mycroft:mycroft:myMycroft "Mycroft A.I." @ "Living Room" [host="192.168.X.X", port=8181] {
     Channels:
         Type full-message-channel : Text [
             messageTypes="message.type.1,message.type.4"
