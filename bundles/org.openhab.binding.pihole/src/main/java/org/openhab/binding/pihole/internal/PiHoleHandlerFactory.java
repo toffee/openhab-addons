@@ -1,5 +1,5 @@
-/**
- * Copyright (c) 2010-2024 Contributors to the openHAB project
+/*
+ * Copyright (c) 2010-2026 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -18,6 +18,7 @@ import java.util.Set;
 
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
+import org.openhab.core.i18n.TimeZoneProvider;
 import org.openhab.core.io.net.http.HttpClientFactory;
 import org.openhab.core.thing.Thing;
 import org.openhab.core.thing.ThingTypeUID;
@@ -28,6 +29,10 @@ import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 
+import com.google.gson.FieldNamingPolicy;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+
 /**
  * The {@link PiHoleHandlerFactory} is responsible for creating things and thing
  * handlers.
@@ -37,12 +42,17 @@ import org.osgi.service.component.annotations.Reference;
 @NonNullByDefault
 @Component(configurationPid = "binding.pihole", service = ThingHandlerFactory.class)
 public class PiHoleHandlerFactory extends BaseThingHandlerFactory {
-
     private static final Set<ThingTypeUID> SUPPORTED_THING_TYPES_UIDS = Set.of(PI_HOLE_TYPE);
+    private static final Gson GSON = new GsonBuilder()
+            .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
+
+    private final TimeZoneProvider timeZoneProvider;
     private final HttpClientFactory httpClientFactory;
 
     @Activate
-    public PiHoleHandlerFactory(@Reference HttpClientFactory httpClientFactory) {
+    public PiHoleHandlerFactory(@Reference TimeZoneProvider timeZoneProvider,
+            @Reference HttpClientFactory httpClientFactory) {
+        this.timeZoneProvider = timeZoneProvider;
         this.httpClientFactory = httpClientFactory;
     }
 
@@ -56,9 +66,8 @@ public class PiHoleHandlerFactory extends BaseThingHandlerFactory {
         ThingTypeUID thingTypeUID = thing.getThingTypeUID();
 
         if (PI_HOLE_TYPE.equals(thingTypeUID)) {
-            return new PiHoleHandler(thing, httpClientFactory.getCommonHttpClient());
+            return new PiHoleHandler(thing, timeZoneProvider, httpClientFactory.getCommonHttpClient(), GSON);
         }
-
         return null;
     }
 }

@@ -1,5 +1,5 @@
-/**
- * Copyright (c) 2010-2024 Contributors to the openHAB project
+/*
+ * Copyright (c) 2010-2026 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -29,6 +29,7 @@ import javax.measure.quantity.Energy;
 import javax.measure.quantity.Power;
 
 import org.eclipse.jdt.annotation.NonNullByDefault;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.openhab.binding.solarforecast.internal.SolarForecastBindingConstants;
 import org.openhab.binding.solarforecast.internal.SolarForecastException;
@@ -65,8 +66,16 @@ class ForecastSolarTest {
     public static final String TOO_EARLY_INDICATOR = "too early";
     public static final String TOO_LATE_INDICATOR = "too late";
     public static final String INVALID_RANGE_INDICATOR = "invalid time range";
-    public static final String NO_GORECAST_INDICATOR = "No forecast data";
+    public static final String NO_FORECAST_INDICATOR = "No forecast data";
     public static final String DAY_MISSING_INDICATOR = "not available in forecast";
+
+    @BeforeAll
+    static void setFixedTime() {
+        // Instant matching the date of test resources
+        String fixedInstant = "2022-07-17T15:00:00Z";
+        Clock fixedClock = Clock.fixed(Instant.parse(fixedInstant), TEST_ZONE);
+        Utils.setClock(fixedClock);
+    }
 
     @Test
     void testForecastObject() {
@@ -163,8 +172,8 @@ class ForecastSolarTest {
         } catch (SolarForecastException sfe) {
             String message = sfe.getMessage();
             assertNotNull(message);
-            assertTrue(message.contains(NO_GORECAST_INDICATOR),
-                    "Expected: " + NO_GORECAST_INDICATOR + " Received: " + sfe.getMessage());
+            assertTrue(message.contains(NO_FORECAST_INDICATOR),
+                    "Expected: " + NO_FORECAST_INDICATOR + " Received: " + sfe.getMessage());
         }
         try {
             double d = fo.getDayTotal(query.toLocalDate());
@@ -172,8 +181,8 @@ class ForecastSolarTest {
         } catch (SolarForecastException sfe) {
             String message = sfe.getMessage();
             assertNotNull(message);
-            assertTrue(message.contains(NO_GORECAST_INDICATOR),
-                    "Expected: " + NO_GORECAST_INDICATOR + " Received: " + sfe.getMessage());
+            assertTrue(message.contains(NO_FORECAST_INDICATOR),
+                    "Expected: " + NO_FORECAST_INDICATOR + " Received: " + sfe.getMessage());
         }
         try {
             double d = fo.getDayTotal(query.plusDays(1).toLocalDate());
@@ -181,8 +190,8 @@ class ForecastSolarTest {
         } catch (SolarForecastException sfe) {
             String message = sfe.getMessage();
             assertNotNull(message);
-            assertTrue(message.contains(NO_GORECAST_INDICATOR),
-                    "Expected: " + NO_GORECAST_INDICATOR + " Received: " + sfe.getMessage());
+            assertTrue(message.contains(NO_FORECAST_INDICATOR),
+                    "Expected: " + NO_FORECAST_INDICATOR + " Received: " + sfe.getMessage());
         }
 
         // valid object - query date one day too early
@@ -345,16 +354,20 @@ class ForecastSolarTest {
         ForecastSolarObject fo = new ForecastSolarObject("fs-test", content, queryDateTime.toInstant());
 
         TimeSeries powerSeries = fo.getPowerTimeSeries(QueryMode.Average);
-        assertEquals(36, powerSeries.size()); // 18 values each day for 2 days
+        Instant now = Utils.now().minus(1, ChronoUnit.HOURS);
+        // 24 hours of data plus current hour = 25
+        assertEquals(25, powerSeries.size());
         powerSeries.getStates().forEachOrdered(entry -> {
+            assertTrue(Utils.isAfterOrEqual(entry.timestamp(), now));
             State s = entry.state();
             assertTrue(s instanceof QuantityType<?>);
             assertEquals("kW", ((QuantityType<?>) s).getUnit().toString());
         });
 
         TimeSeries energySeries = fo.getEnergyTimeSeries(QueryMode.Average);
-        assertEquals(36, energySeries.size());
+        assertEquals(25, energySeries.size());
         energySeries.getStates().forEachOrdered(entry -> {
+            assertTrue(Utils.isAfterOrEqual(entry.timestamp(), now));
             State s = entry.state();
             assertTrue(s instanceof QuantityType<?>);
             assertEquals("kWh", ((QuantityType<?>) s).getUnit().toString());
@@ -363,15 +376,12 @@ class ForecastSolarTest {
 
     @Test
     void testPowerTimeSeries() {
-        // Instant matching the date of test resources
-        String fixedInstant = "2022-07-17T15:00:00Z";
-        Clock fixedClock = Clock.fixed(Instant.parse(fixedInstant), TEST_ZONE);
-        Utils.setClock(fixedClock);
         ForecastSolarBridgeHandler fsbh = new ForecastSolarBridgeHandler(
                 new BridgeImpl(SolarForecastBindingConstants.FORECAST_SOLAR_SITE, "bridge"),
                 Optional.of(PointType.valueOf("1,2")));
         CallbackMock cm = new CallbackMock();
         fsbh.setCallback(cm);
+        fsbh.initialize();
 
         String content = FileReader.readFileInString("src/test/resources/forecastsolar/result.json");
         ForecastSolarObject fso1 = new ForecastSolarObject("fs-test", content, Instant.now().plus(1, ChronoUnit.DAYS));
@@ -398,16 +408,12 @@ class ForecastSolarTest {
 
     @Test
     void testCommonForecastStartEnd() {
-        // Instant matching the date of test resources
-        String fixedInstant = "2022-07-17T15:00:00Z";
-        Clock fixedClock = Clock.fixed(Instant.parse(fixedInstant), TEST_ZONE);
-        Utils.setClock(fixedClock);
         ForecastSolarBridgeHandler fsbh = new ForecastSolarBridgeHandler(
                 new BridgeImpl(SolarForecastBindingConstants.FORECAST_SOLAR_SITE, "bridge"),
                 Optional.of(PointType.valueOf("1,2")));
         CallbackMock cmSite = new CallbackMock();
         fsbh.setCallback(cmSite);
-
+        fsbh.initialize();
         String contentOne = FileReader.readFileInString("src/test/resources/forecastsolar/result.json");
         ForecastSolarObject fso1One = new ForecastSolarObject("fs-test", contentOne,
                 Instant.now().plus(1, ChronoUnit.DAYS));
@@ -447,15 +453,12 @@ class ForecastSolarTest {
 
     @Test
     void testActions() {
-        // Instant matching the date of test resources
-        String fixedInstant = "2022-07-17T15:00:00Z";
-        Clock fixedClock = Clock.fixed(Instant.parse(fixedInstant), TEST_ZONE);
-        Utils.setClock(fixedClock);
         ForecastSolarBridgeHandler fsbh = new ForecastSolarBridgeHandler(
                 new BridgeImpl(SolarForecastBindingConstants.FORECAST_SOLAR_SITE, "bridge"),
                 Optional.of(PointType.valueOf("1,2")));
         CallbackMock cmSite = new CallbackMock();
         fsbh.setCallback(cmSite);
+        fsbh.initialize();
 
         String contentOne = FileReader.readFileInString("src/test/resources/forecastsolar/result.json");
         ForecastSolarObject fso1One = new ForecastSolarObject("fs-test", contentOne,
@@ -486,15 +489,12 @@ class ForecastSolarTest {
 
     @Test
     void testEnergyTimeSeries() {
-        // Instant matching the date of test resources
-        String fixedInstant = "2022-07-17T15:00:00Z";
-        Clock fixedClock = Clock.fixed(Instant.parse(fixedInstant), TEST_ZONE);
-        Utils.setClock(fixedClock);
         ForecastSolarBridgeHandler fsbh = new ForecastSolarBridgeHandler(
                 new BridgeImpl(SolarForecastBindingConstants.FORECAST_SOLAR_SITE, "bridge"),
                 Optional.of(PointType.valueOf("1,2")));
         CallbackMock cm = new CallbackMock();
         fsbh.setCallback(cm);
+        fsbh.initialize();
 
         String content = FileReader.readFileInString("src/test/resources/forecastsolar/result.json");
         ForecastSolarObject fso1 = new ForecastSolarObject("fs-test", content, Instant.now().plus(1, ChronoUnit.DAYS));
@@ -521,15 +521,12 @@ class ForecastSolarTest {
 
     @Test
     void testCalmDown() {
-        // Instant matching the date of test resources
-        String fixedInstant = "2022-07-17T15:00:00Z";
-        Clock fixedClock = Clock.fixed(Instant.parse(fixedInstant), TEST_ZONE);
-        Utils.setClock(fixedClock);
         ForecastSolarBridgeHandler fsbh = new ForecastSolarBridgeHandler(
                 new BridgeImpl(SolarForecastBindingConstants.FORECAST_SOLAR_SITE, "bridge"),
                 Optional.of(PointType.valueOf("1,2")));
         CallbackMock cm = new CallbackMock();
         fsbh.setCallback(cm);
+        fsbh.initialize();
 
         String content = FileReader.readFileInString("src/test/resources/forecastsolar/result.json");
         ForecastSolarObject fso1 = new ForecastSolarObject("fs-test", content, Instant.now().plus(1, ChronoUnit.DAYS));
@@ -555,8 +552,8 @@ class ForecastSolarTest {
         assertEquals(ThingStatusDetail.COMMUNICATION_ERROR, cm.getStatus().getStatusDetail(), "Offline");
 
         // forward Clock to get ONLINE again
-        fixedInstant = "2022-07-17T16:15:00Z";
-        fixedClock = Clock.fixed(Instant.parse(fixedInstant), ZoneId.of("UTC"));
+        String fixedInstant = "2022-07-17T16:15:00Z";
+        Clock fixedClock = Clock.fixed(Instant.parse(fixedInstant), ZoneId.of("UTC"));
         Utils.setClock(fixedClock);
         fsbh.handleCommand(
                 new ChannelUID("solarforecast:fs-site:bridge:" + SolarForecastBindingConstants.CHANNEL_ENERGY_ACTUAL),

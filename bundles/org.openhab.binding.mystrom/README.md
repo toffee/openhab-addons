@@ -5,7 +5,7 @@ As of today only the Smart Plug, Bulb and the Motionsensor are implemented.
 
 ## Supported Things
 
-This bundle adds the following thing types:
+This bundle adds the following Thing types:
 
 | Thing                 | ThingTypeID | Description                                        |
 | ----------------------| ----------- | -------------------------------------------------- |
@@ -21,7 +21,7 @@ This extension does not support autodiscovery. The things need to be added manua
 
 ## Thing Configuration
 
-The following parameters are valid for all thing types:
+The following parameters are valid for all Thing types:
 
 | Parameter | Type    | Required | Default if omitted | Description                                                                |
 | --------- | ------- | -------- | ------------------ | -------------------------------------------------------------------------- |
@@ -31,9 +31,9 @@ The following parameters are valid for all thing types:
 
 ## Properties
 
-In addition to the configuration a myStrom thing has the following properties.
+In addition to the configuration a myStrom Thing has the following properties.
 The properties are updated during initialize.
-Disabling/enabling the thing can be used to update the properties.
+Disabling/enabling the Thing can be used to update the properties.
 
 | Property-Name | Description                                                           |
 | ------------- | --------------------------------------------------------------------- |
@@ -76,16 +76,15 @@ Thing mystrom:mystromplug:d6217a31 "Plug" [hostname="hostname|ip"]
 
 ```java
 Switch              PlugSwitch                      "Plug"                      {channel="mystrom:mystromplug:d6217a31:switch"}
-Number:Temperature  PlugTemperature                 "Temperature: [%.1f °C]"    {channel="mystrom:mystromplug:d6217a31:temperature"}  
+Number:Temperature  PlugTemperature                 "Temperature: [%.1f °C]"    {channel="mystrom:mystromplug:d6217a31:temperature"}
 Number:Power        PlugPower                       "Power: [%.1f W]"           {channel="mystrom:mystromplug:d6217a31:power"}
-Number:Energy       PlugEnergyConsumedSinceLastCall "Ws: [%.1f Ws]"             {channel="mystrom:mystromplug:d6217a31:energy-consumed-since-last-call"} 
+Number:Energy       PlugEnergyConsumedSinceLastCall "Ws: [%.1f Ws]"             {channel="mystrom:mystromplug:d6217a31:energy-consumed-since-last-call"}
 ```
-
 
 ### Sitemap Configuration
 
 ```perl
-Frame label="myStrom Plug" { 
+Frame label="myStrom Plug" {
     Switch item=PlugSwitch
     Text item=PlugTemperature
     Text item=PlugPower

@@ -2,6 +2,9 @@
 
 This is an add-on that exposes your openHAB system as a bridge over the HomeKit protocol.
 
+This integration **exports** openHAB Items to a HomeKit controller, so you can control openHAB from the Home app on Apple devices.
+Do not confuse this with the HomeKit **binding** (<https://www.openhab.org/addons/bindings/homekit/>) which **imports** data from HomeKit accessories so that you can control them directly from openHAB.
+
 Using this add-on, you will be able to control your openHAB system using Apple's Siri, or any of a number of HomeKit enabled iOS apps.
 In order to do so, you will need to make some configuration changes.
 HomeKit organizes your home into "accessories" that are made up of a number of "characteristics".
@@ -47,7 +50,7 @@ HomeKit integration supports following accessory types:
 
 - install homekit addon via UI
 
-- add metadata to an existing item (see [UI based configuration](#UI-based-Configuration))
+- add metadata to an existing item (see [UI based configuration](#ui-based-configuration))
 
 - scan QR code from UI->Settings->HomeKit Integration
 
@@ -76,7 +79,6 @@ HomeKit integration supports following accessory types:
 
 Add metadata to more items or fine-tune your configuration using further settings
 
-
 ## Global Configuration
 
 You can define HomeKit settings either via mainUI or via `$OPENHAB_CONF/services/homekit.cfg`.
@@ -87,7 +89,7 @@ At the very least, you cannot use repeating (111-11-111) or sequential (123-45-6
 
 Other settings, such as using Fahrenheit temperatures and specifying the interface to advertise the HomeKit bridge are also illustrated in the following sample:
 
-```
+```ini
 org.openhab.homekit:port=9123
 org.openhab.homekit:pin=031-45-154
 org.openhab.homekit:useFahrenheitTemperature=true
@@ -153,8 +155,7 @@ In order to add metadata to an item:
 
 - click on "Save"
 
-
-### Textual configuration
+### Textual Configuration
 
 ```java
 Switch leaksensor_metadata  "Leak Sensor"           {homekit="LeakSensor"}
@@ -165,7 +166,7 @@ The tag can be:
 - full qualified: i.e. with accessory type and characteristic, e.g. "LeakSensor.LeakDetectedState"
 - shorthand version: with only either accessory type or characteristic, e.g. "LeakSensor", "LeakDetectedState".
 
-if shorthand version has only accessory type, then HomeKit will automatically link *all* mandatory characteristics of this accessory type to the openHAB item.
+if shorthand version has only accessory type, then HomeKit will automatically link _all_ mandatory characteristics of this accessory type to the openHAB item.
 e.g. HomeKit window covering has 3 mandatory characteristics: CurrentPosition, TargetPosition, PositionState.
 Following are equal configuration:
 
@@ -453,7 +454,7 @@ Rollershutter window          "Window"               {homekit = "Window" [invert
 Rollershutter door            "Door"                 {homekit = "Door" [inverted=false]}
  ```
 
-HomeKit home app never sends "STOP" but only the target position. 
+HomeKit home app never sends "STOP" but only the target position.
 If you add configuration parameter "stop=true", openHAB will emulate stop and send "STOP" command to rollershutter item if you click on the blind icon in the iOS home app while the blind is moving.
 
 ```java
@@ -517,9 +518,11 @@ String          thermostat_target_mode     "Thermostat Target Mode"             
 
 In addition, thermostat can have thresholds for cooling and heating modes.
 When a thermostat is configured with all three of TargetTemperature, HeatingThresholdTemperature, and CoolingThresholdTemperature, Home will set the characteristics as follows:
- * TargetTemperature is used when the thermostat is in HEAT or COOL TargetHeatingCoolingMode.
- * CoolingThresholdThemperature and HeatingThresholdTemperature are _only_ used in AUTO TargetHeatingCoolingMode.
- * In AUTO TargetHeatingCoolingMode, TargetTemperature will be set to the average of CoolingThresholdThemperature and HeatingThresholdTemperature.
+
+- TargetTemperature is used when the thermostat is in HEAT or COOL TargetHeatingCoolingMode.
+- CoolingThresholdThemperature and HeatingThresholdTemperature are _only_ used in AUTO TargetHeatingCoolingMode.
+- In AUTO TargetHeatingCoolingMode, TargetTemperature will be set to the average of CoolingThresholdThemperature and HeatingThresholdTemperature.
+
 Example with thresholds:
 
 ```java
@@ -701,7 +704,7 @@ Switch          motionsensor_tampered      "Motion Sensor Tampered"             
 or using UI
 
 ![sensor_ui_config.png](doc/sensor_ui_config.png)
- 
+
 ### Stateless Programmable Switch Groups
 
 To expose multiple Stateless Programmable Switches as a single accessory with multiple buttons (aka a scene controller), you need to configure ServiceLabel on the accessory group and ServiceIndex on each switch.
@@ -715,12 +718,12 @@ Switch Button3 "Switch C" (gSceneController) { homekit="StatelessProgrammableSwi
 Switch Button4 "Switch D" (gSceneController) { homekit="StatelessProgrammableSwitch"[ServiceIndex=4] }
 ```
 
-## Supported accessory types
+## Supported Accessory Types
 
 For configuration options, the default values are in parentheses.
 For enum values, the parentheses indicate the default values if the item is a Number or a Switch.
 All enum values can be customized via item metadata. I.e. `HEAT="heating", COOL="cooling"`, or `HEAT=5, COOL=7` for a Number.
-<a id="customizeable-enum">Some enums can have the list of valid values customized, meaning that if you customize the mapping, any value that is missing will not be presented to the user.</a>
+<a name="customizable-enum">Some enums can have the list of valid values customized, meaning that if you customize the mapping, any value that is missing will not be presented to the user.</a>
 They are appropriately marked.
 Enums that are linked to Switches or Contacts have an `inverted` param that will reverse the sense of `ON`/`OFF` or `OPEN`/`CLOSED`.
 
@@ -728,6 +731,7 @@ Enum mappings can have multiple values for a single key.
 These must be an array, not a comma separated string.
 If the characteristic can be set by HomeKit, the first value will be used when sending the command to the linked item.
 Such a mapping can be configured manually in MainUI on HomeKit metadata in the Code editor:
+
 ```yaml
 value: "Lock"
 config:
@@ -738,23 +742,27 @@ config:
     - UNLOCK
     - UNLOCKED
 ```
+
 Or in a `.items` file:
+
 ```java
 String MyLock "My Lock" { homekit="Lock"[SECURE="LOCK","LOCKED", UNSECURE="UNLOCK","UNLOCKED"] }
 ```
 
 All accessories support the following characteristics that can be set via metadata or linked to a String item:
- * Name (defaults to item's label)
- * Manufacturer (defaults to "none")
- * Model (defaults to "none")
- * SerialNumber (defaults to item's name)
- * FirmwareRevision (defaults to "none")
- * HardwareRevision (defaults to not present)
+
+- Name (defaults to item's label)
+- Manufacturer (defaults to "none")
+- Model (defaults to "none")
+- SerialNumber (defaults to item's name)
+- FirmwareRevision (defaults to "none")
+- HardwareRevision (defaults to not present)
 
 Note that even though these characteristics can be linked to an item, they are not dynamic and cannot be updated once the Home app reads their initial values.
 
 All accessories also support the following optional characteristic that can be linked to a Switch item:
- * Identify (receives `ON` command when the user wishes to identify the accessory)
+
+- Identify (receives `ON` command when the user wishes to identify the accessory)
 
 | Accessory Tag               | Mandatory Characteristics   | Optional Characteristics    | Supported openHAB item types                   | Description                                                                                                                                                                                                                                                                                                                                                   | Configuration Options                                                 | Valid Enum Values                                                                                           |
 |-----------------------------|-----------------------------|-----------------------------|------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------|
@@ -806,6 +814,10 @@ All accessories also support the following optional characteristic that can be l
 |                             | TargetPosition              |                             | Dimmer, Number, Rollershutter                  | Target position of motorized door                                                                                                                                                                                                                                                                                                                             |                                                                       |                                                                                                             |
 |                             |                             | HoldPosition                | Rollershutter, Switch                          | Motorized door should stop at its current position. ON is sent to Switch items. STOP is sent to Rollershutter items. Only supported by 3rd party Home apps (such as Elgato Eve)                                                                                                                                                                               |                                                                       |                                                                                                             |
 |                             |                             | ObstructionStatus           | Contact, Dimmer, Switch                        | Current status of obstruction sensor. ON-obstruction detected, OFF - no obstruction                                                                                                                                                                                                                                                                           |                                                                       |                                                                                                             |
+| Doorbell                    |                             |                             |                                                | Doorbell. This accessory must also have a Speaker, Microphone, and Camera RTP Stream Management service in the same group in order to be usable by the Home App. The latter is not yet implemented in openHAB.                                                                                                                                                |                                                                       |                                                                                                             |
+|                             | ProgrammableSwitchEvent     |                             | Contact, Number, String, Switch                | The button press event. Note that the event will be forwarded to Home for every _update_ of the item, not just on change.                                                                                                                                                                                                                                     | inverted (false)                                                      | SINGLE_PRESS (0, ON, OPEN), DOUBLE_PRESS (1), LONG_PRESS (2) [*](#customizable-enum)                        |
+|                             |                             | Brightness                  | Dimmer                                         | Brightness in % (1-100).                                                                                                                                                                                                                                                                                                                                      |                                                                       |                                                                                                             |
+|                             |                             | Volume                      | Number                                         | Speaker volume from 0% to 100%                                                                                                                                                                                                                                                                                                                                |                                                                       |                                                                                                             |
 | Fan                         |                             |                             |                                                | Fan                                                                                                                                                                                                                                                                                                                                                           |                                                                       |                                                                                                             |
 |                             | ActiveStatus                |                             | Dimmer, Switch                                 | Accessory current working status. A value of "ON"/"OPEN" indicates that the accessory is active and is functioning without any errors.                                                                                                                                                                                                                        |                                                                       |                                                                                                             |
 |                             |                             | CurrentFanState             | Number, String                                 | Current fan state.                                                                                                                                                                                                                                                                                                                                            |                                                                       | INACTIVE (0), IDLE (1), BLOWING_AIR (2)                                                                     |
@@ -922,7 +934,7 @@ All accessories also support the following optional characteristic that can be l
 |                             | Mute                        |                             | Contact, Dimmer, Switch                        | Mute indication. ON/OPEN = speaker is muted                                                                                                                                                                                                                                                                                                                   | inverted (false)                                                      |                                                                                                             |
 |                             |                             | Active                      | Contact, Dimmer, Number, String, Switch        | Accessory current working status                                                                                                                                                                                                                                                                                                                              | inverted (false)                                                      | INACTIVE (0, OFF), ACTIVE (1, ON)                                                                           |
 |                             |                             | Volume                      | Number                                         | Speaker volume from 0% to 100%                                                                                                                                                                                                                                                                                                                                |                                                                       |                                                                                                             |
-| StatelessProgrammableSwitch |                             |                             |                                                | A stateless programmable switch is a button or scene controller that simply sends an event to Home when it is pressed, allowing automations to occur. See [Stateless Programmable Switch Groups](#Stateless-Programmable-Switch-Groups) for configuring multiple in one accessory.                                                                            |                                                                       |                                                                                                             |
+| StatelessProgrammableSwitch |                             |                             |                                                | A stateless programmable switch is a button or scene controller that simply sends an event to Home when it is pressed, allowing automations to occur. See [Stateless Programmable Switch Groups](#stateless-programmable-switch-groups) for configuring multiple in one accessory.                                                                            |                                                                       |                                                                                                             |
 |                             | ProgrammableSwitchEvent     |                             | Contact, Number, String, Switch                | The button press event. Note that the event will be forwarded to Home for every _update_ of the item, not just on change.                                                                                                                                                                                                                                     | inverted (false)                                                      | SINGLE_PRESS (0, ON, OPEN), DOUBLE_PRESS (1), LONG_PRESS (2) [*](#customizable-enum)                        |
 |                             |                             | Volume                      | Number                                         | Speaker volume from 0% to 100%                                                                                                                                                                                                                                                                                                                                |                                                                       |                                                                                                             |
 | Switchable                  |                             |                             |                                                | An accessory that can be turned off and on. While similar to a lightbulb, this will be presented differently in the Siri grammar and iOS apps                                                                                                                                                                                                                 |                                                                       |                                                                                                             |
@@ -1073,7 +1085,7 @@ In order to overcome this limitation, you can instruct openHAB to expose multipl
 You will need to manually add each additional bridge in the Home app, since the QR Code in settings will only be for the primary bridge; however the same PIN is still used.
 In order to assign a particular accessory to a different bridge, set the `instance` metadata parameter:
 
-```
+```java
 Switch kitchen_light {homekit="Lighting" [instance=2]}
 ```
 
@@ -1082,7 +1094,7 @@ If you reference an instance that doesn't exist, then that accessory won't be ex
 
 For complex items, only the root group needs to be tagged for the specific instance:
 
-```
+```java
 Group           gSecuritySystem            "Security System Group"                                     {homekit="SecuritySystem" [instance=2]}
 String          security_current_state     "Security Current State"               (gSecuritySystem)    {homekit="SecuritySystem.CurrentSecuritySystemState"}
 String          security_target_state      "Security Target State"                (gSecuritySystem)    {homekit="SecuritySystem.TargetSecuritySystemState"}
@@ -1109,14 +1121,14 @@ Depending on the openHAB installation method, you should modify `start.sh`, `sta
 If you encounter any issues with the add-on and need support, it may be important to get detailed logs of your device's communication with openHAB.
 In order to get logs from the underlying library used to implement the HomeKit protocol, enable trace logging using the following commands at [the console](https://www.openhab.org/docs/administration/console.html):
 
-```
+```shell
 openhab> log:set TRACE io.github.hapjava
 openhab> log:tail io.github.hapjava
 ```
 
 In order to enable detailed logs of openHAB HomeKit binding
 
-```
+```shell
 openhab> log:set TRACE org.openhab.io.homekit.internal
 openhab> log:tail org.openhab.io.homekit.internal
 ```
@@ -1159,12 +1171,12 @@ You can verify this with [Discovery DNS iOS app](https://apps.apple.com/us/app/d
 There are various reasons this may happen.
 Try the following:
 
-* In [openhab-cli](https://www.openhab.org/docs/administration/console.html), run `openhab:homekit clearPairings`.
+- In [openhab-cli](https://www.openhab.org/docs/administration/console.html), run `openhab:homekit clearPairings`.
 Try again.
-* In the HomeKit settings, change the port, setupId, and pin.
+- In the HomeKit settings, change the port, setupId, and pin.
 Save the settings, then re-open the settings so as to refresh the QR code.
 Re-add the device.
-* Remove HomeKit state in `${OPENHAB_USERDATA}/jsondb/homekit.json`, and HomeKit config in `${OPENHAB_USERDATA}/config/org/openhab/homekit.config`.
+- Remove HomeKit state in `${OPENHAB_USERDATA}/jsondb/homekit.json`, and HomeKit config in `${OPENHAB_USERDATA}/config/org/openhab/homekit.config`.
   Restart openHAB.
   Reboot iPhone.
   Try again.
@@ -1181,18 +1193,18 @@ switch?).
 If you added it incorrectly, simply updating the item type will not cause Home to update the type.
 To resolve:
 
-1) If using text configuration: Comment out the HomeKit metadata for an accessory.
+1. If using text configuration: Comment out the HomeKit metadata for an accessory.
 If in the GUI, delete the HomeKit metadata for all items associated with the accessory.
 
-2) If you have `useDummyAccessories` enabled, open the
+1. If you have `useDummyAccessories` enabled, open the
 [openhab-cli](https://www.openhab.org/docs/administration/console.html).
 Run `openhab:homekit listDummyAccessories` and
 confirm your item is in the list.
 Once you've confirmed, clear it with `openhab:homekit clearDummyAccessories`.
 
-3) Kill your Home app on your iOS device.
+1. Kill your Home app on your iOS device.
 Re-open it, and confirm that the accessory is gone.
 
-4) Uncomment the HomeKit metadata or re-add it via the UI.
+1. Uncomment the HomeKit metadata or re-add it via the UI.
 
-5) You should now see the updated configuration for your accessory.
+1. You should now see the updated configuration for your accessory.

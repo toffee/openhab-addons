@@ -1,5 +1,5 @@
-/**
- * Copyright (c) 2010-2024 Contributors to the openHAB project
+/*
+ * Copyright (c) 2010-2026 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -13,36 +13,8 @@
 package org.openhab.binding.pihole.internal;
 
 import static java.util.concurrent.TimeUnit.*;
-import static org.openhab.binding.pihole.internal.PiHoleBindingConstants.Channels.ADS_BLOCKED_TODAY_CHANNEL;
-import static org.openhab.binding.pihole.internal.PiHoleBindingConstants.Channels.ADS_PERCENTAGE_TODAY_CHANNEL;
-import static org.openhab.binding.pihole.internal.PiHoleBindingConstants.Channels.CLIENTS_EVER_SEEN_CHANNEL;
-import static org.openhab.binding.pihole.internal.PiHoleBindingConstants.Channels.DISABLE_ENABLE_CHANNEL;
-import static org.openhab.binding.pihole.internal.PiHoleBindingConstants.Channels.DNS_QUERIES_ALL_REPLIES_CHANNEL;
-import static org.openhab.binding.pihole.internal.PiHoleBindingConstants.Channels.DNS_QUERIES_ALL_TYPES_CHANNEL;
-import static org.openhab.binding.pihole.internal.PiHoleBindingConstants.Channels.DNS_QUERIES_TODAY_CHANNEL;
-import static org.openhab.binding.pihole.internal.PiHoleBindingConstants.Channels.DOMAINS_BEING_BLOCKED_CHANNEL;
-import static org.openhab.binding.pihole.internal.PiHoleBindingConstants.Channels.DisableEnable;
+import static org.openhab.binding.pihole.internal.PiHoleBindingConstants.Channels.*;
 import static org.openhab.binding.pihole.internal.PiHoleBindingConstants.Channels.DisableEnable.ENABLE;
-import static org.openhab.binding.pihole.internal.PiHoleBindingConstants.Channels.ENABLED_CHANNEL;
-import static org.openhab.binding.pihole.internal.PiHoleBindingConstants.Channels.PRIVACY_LEVEL_CHANNEL;
-import static org.openhab.binding.pihole.internal.PiHoleBindingConstants.Channels.QUERIES_CACHED_CHANNEL;
-import static org.openhab.binding.pihole.internal.PiHoleBindingConstants.Channels.QUERIES_FORWARDED_CHANNEL;
-import static org.openhab.binding.pihole.internal.PiHoleBindingConstants.Channels.REPLY_BLOB_CHANNEL;
-import static org.openhab.binding.pihole.internal.PiHoleBindingConstants.Channels.REPLY_CNAME_CHANNEL;
-import static org.openhab.binding.pihole.internal.PiHoleBindingConstants.Channels.REPLY_DNSSEC_CHANNEL;
-import static org.openhab.binding.pihole.internal.PiHoleBindingConstants.Channels.REPLY_DOMAIN_CHANNEL;
-import static org.openhab.binding.pihole.internal.PiHoleBindingConstants.Channels.REPLY_IP_CHANNEL;
-import static org.openhab.binding.pihole.internal.PiHoleBindingConstants.Channels.REPLY_NODATA_CHANNEL;
-import static org.openhab.binding.pihole.internal.PiHoleBindingConstants.Channels.REPLY_NONE_CHANNEL;
-import static org.openhab.binding.pihole.internal.PiHoleBindingConstants.Channels.REPLY_NOTIMP_CHANNEL;
-import static org.openhab.binding.pihole.internal.PiHoleBindingConstants.Channels.REPLY_NXDOMAIN_CHANNEL;
-import static org.openhab.binding.pihole.internal.PiHoleBindingConstants.Channels.REPLY_OTHER_CHANNEL;
-import static org.openhab.binding.pihole.internal.PiHoleBindingConstants.Channels.REPLY_REFUSED_CHANNEL;
-import static org.openhab.binding.pihole.internal.PiHoleBindingConstants.Channels.REPLY_RRNAME_CHANNEL;
-import static org.openhab.binding.pihole.internal.PiHoleBindingConstants.Channels.REPLY_SERVFAIL_CHANNEL;
-import static org.openhab.binding.pihole.internal.PiHoleBindingConstants.Channels.REPLY_UNKNOWN_CHANNEL;
-import static org.openhab.binding.pihole.internal.PiHoleBindingConstants.Channels.UNIQUE_CLIENTS_CHANNEL;
-import static org.openhab.binding.pihole.internal.PiHoleBindingConstants.Channels.UNIQUE_DOMAINS_CHANNEL;
 import static org.openhab.core.library.unit.Units.PERCENT;
 import static org.openhab.core.thing.ThingStatus.OFFLINE;
 import static org.openhab.core.thing.ThingStatus.ONLINE;
@@ -52,6 +24,7 @@ import static org.openhab.core.thing.ThingStatusDetail.*;
 import java.math.BigDecimal;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.time.Instant;
 import java.util.Collection;
 import java.util.Optional;
 import java.util.Set;
@@ -60,9 +33,13 @@ import java.util.concurrent.ScheduledFuture;
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
 import org.eclipse.jetty.client.HttpClient;
+import org.openhab.binding.pihole.internal.PiHoleBindingConstants.Channels.DisableEnable;
 import org.openhab.binding.pihole.internal.rest.AdminService;
 import org.openhab.binding.pihole.internal.rest.JettyAdminService;
+import org.openhab.binding.pihole.internal.rest.JettyAdminServiceV6;
 import org.openhab.binding.pihole.internal.rest.model.DnsStatistics;
+import org.openhab.core.i18n.TimeZoneProvider;
+import org.openhab.core.library.types.DateTimeType;
 import org.openhab.core.library.types.DecimalType;
 import org.openhab.core.library.types.OnOffType;
 import org.openhab.core.library.types.QuantityType;
@@ -76,6 +53,8 @@ import org.openhab.core.types.RefreshType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.gson.Gson;
+
 /**
  * The {@link PiHoleHandler} is responsible for handling commands, which are
  * sent to one of the channels.
@@ -83,19 +62,23 @@ import org.slf4j.LoggerFactory;
  * @author Martin Grzeslowski - Initial contribution
  */
 @NonNullByDefault
-public class PiHoleHandler extends BaseThingHandler implements AdminService {
+public class PiHoleHandler extends BaseThingHandler {
     private static final int HTTP_DELAY_SECONDS = 1;
     private final Logger logger = LoggerFactory.getLogger(PiHoleHandler.class);
     private final Object lock = new Object();
+    private final TimeZoneProvider timeZoneProvider;
     private final HttpClient httpClient;
+    private final Gson gson;
 
     private @Nullable AdminService adminService;
     private @Nullable DnsStatistics dnsStatistics;
     private @Nullable ScheduledFuture<?> scheduledFuture;
 
-    public PiHoleHandler(Thing thing, HttpClient httpClient) {
+    public PiHoleHandler(Thing thing, TimeZoneProvider timeZoneProvider, HttpClient httpClient, Gson gson) {
         super(thing);
+        this.timeZoneProvider = timeZoneProvider;
         this.httpClient = httpClient;
+        this.gson = gson;
     }
 
     @Override
@@ -117,14 +100,18 @@ public class PiHoleHandler extends BaseThingHandler implements AdminService {
             hostname = new URI(config.hostname);
         } catch (URISyntaxException e) {
             updateStatus(OFFLINE, CONFIGURATION_ERROR,
-                    "@token/handler.init.invalidHostname[\"" + config.hostname + "\"]");
+                    "@text/handler.init.invalidHostname[\"" + config.hostname + "\"]");
             return;
         }
         if (config.token.isEmpty()) {
-            updateStatus(OFFLINE, CONFIGURATION_ERROR, "@token/handler.init.noToken");
+            updateStatus(OFFLINE, CONFIGURATION_ERROR, "@text/handler.init.noToken");
             return;
         }
-        adminService = new JettyAdminService(config.token, hostname, httpClient);
+
+        adminService = PiHoleConfiguration.API_V6.equals(config.serverVersion)
+                ? new JettyAdminServiceV6(config.token, hostname, httpClient, gson)
+                : new JettyAdminService(config.token, hostname, httpClient, gson);
+
         scheduledFuture = scheduler.scheduleWithFixedDelay(this::update, 0, config.refreshIntervalSeconds, SECONDS);
 
         // do not set status here, the background task will do it.
@@ -218,6 +205,19 @@ public class PiHoleHandler extends BaseThingHandler implements AdminService {
         if (localDnsStatistics.enabled()) {
             updateState(DISABLE_ENABLE_CHANNEL, new StringType(ENABLE.toString()));
         }
+        var gravityLastUpdated = localDnsStatistics.gravityLastUpdated();
+        if (gravityLastUpdated != null) {
+            var absolute = gravityLastUpdated.absolute();
+            if (absolute != null) {
+                var instant = Instant.ofEpochSecond(absolute);
+                var zonedDateTime = instant.atZone(timeZoneProvider.getTimeZone());
+                updateState(GRAVITY_LAST_UPDATE, new DateTimeType(zonedDateTime));
+            }
+            var fileExists = gravityLastUpdated.fileExists();
+            if (fileExists != null) {
+                updateState(GRAVITY_FILE_EXISTS, OnOffType.from(fileExists));
+            }
+        }
     }
 
     private void updateDecimalState(String channelID, @Nullable Integer value) {
@@ -244,7 +244,6 @@ public class PiHoleHandler extends BaseThingHandler implements AdminService {
         super.dispose();
     }
 
-    @Override
     public Optional<DnsStatistics> summary() throws PiHoleException {
         var local = adminService;
         if (local == null) {
@@ -253,7 +252,6 @@ public class PiHoleHandler extends BaseThingHandler implements AdminService {
         return local.summary();
     }
 
-    @Override
     public void disableBlocking(long seconds) throws PiHoleException {
         var local = adminService;
         if (local == null) {
@@ -269,7 +267,6 @@ public class PiHoleHandler extends BaseThingHandler implements AdminService {
         }
     }
 
-    @Override
     public void enableBlocking() throws PiHoleException {
         var local = adminService;
         if (local == null) {
