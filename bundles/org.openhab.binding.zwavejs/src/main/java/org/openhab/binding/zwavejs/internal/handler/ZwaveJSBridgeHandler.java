@@ -25,8 +25,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
-import javax.naming.CommunicationException;
-
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
 import org.openhab.binding.zwavejs.internal.BindingConstants;
@@ -46,6 +44,7 @@ import org.openhab.binding.zwavejs.internal.api.dto.messages.BaseMessage;
 import org.openhab.binding.zwavejs.internal.api.dto.messages.EventMessage;
 import org.openhab.binding.zwavejs.internal.api.dto.messages.ResultMessage;
 import org.openhab.binding.zwavejs.internal.api.dto.messages.VersionMessage;
+import org.openhab.binding.zwavejs.internal.api.exception.CommunicationException;
 import org.openhab.binding.zwavejs.internal.config.ZwaveJSBridgeConfiguration;
 import org.openhab.binding.zwavejs.internal.discovery.NodeDiscoveryService;
 import org.openhab.core.io.net.http.WebSocketFactory;
@@ -118,8 +117,6 @@ public class ZwaveJSBridgeHandler extends BaseBridgeHandler implements ZwaveEven
             stopInitialConnectionJob();
         } catch (CommunicationException e) {
             updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR, e.getMessage());
-        } catch (InterruptedException e) {
-            updateStatus(ThingStatus.OFFLINE);
         }
     }
 
@@ -413,11 +410,21 @@ public class ZwaveJSBridgeHandler extends BaseBridgeHandler implements ZwaveEven
                 .toArray();
     }
 
-    private static Object convertValueType(String value) {
+    /**
+     * Converts a string value to a Boolean, Double or String, in that order of precedence.
+     * Package-private (rather than private) so it can be unit tested directly.
+     */
+    static Object convertValueType(String value) {
+        String trimmed = value.trim();
+
+        if ("true".equalsIgnoreCase(trimmed) || "false".equalsIgnoreCase(trimmed)) {
+            return Boolean.parseBoolean(trimmed);
+        }
+
         try {
-            return Double.parseDouble(value.trim());
+            return Double.parseDouble(trimmed);
         } catch (NumberFormatException e) {
-            return value;
+            return trimmed;
         }
     }
 }

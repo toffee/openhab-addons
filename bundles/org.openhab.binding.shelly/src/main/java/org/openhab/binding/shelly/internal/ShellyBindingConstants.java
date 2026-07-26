@@ -56,6 +56,27 @@ public class ShellyBindingConstants {
     public static final String PROPERTY_COAP_DESCR = "coapDeviceDescr";
     public static final String PROPERTY_COAP_VERSION = "coapVersion";
     public static final String PROPERTY_COIOTAUTO = "coiotAutoEnable";
+    public static final String PROPERTY_CHANNEL_SCHEMA_VERSION = "channelSchemaVersion";
+
+    /*
+     * Channel Groups Used at Runtime
+     *
+     * CHANNEL_GROUP_DEV_STATUS device Firmware, uptime, WiFi, heartbeat
+     * CHANNEL_GROUP_RELAY_CONTROL relay1..n Relay output, input, timers
+     * CHANNEL_GROUP_ROL_CONTROL roller Rollershutter, position, safety
+     * CHANNEL_GROUP_DIMMER_CONTROL dimmer Brightness
+     * CHANNEL_GROUP_LIGHT_CONTROL control Light power, color mode, timers
+     * CHANNEL_GROUP_COLOR_CONTROL color HSB, RGBW values
+     * CHANNEL_GROUP_WHITE_CONTROL white White brightness and temperature
+     * CHANNEL_GROUP_LIGHT_CHANNEL channel1..n RGBW2 individual white channels
+     * CHANNEL_GROUP_METER meter1..n Watts, kWh, voltage, current
+     * CHANNEL_GROUP_NMETER nmeter 3EM neutral current
+     * CHANNEL_GROUP_SENSOR sensors All environmental readings
+     * CHANNEL_GROUP_BATTERY battery Level, low-battery flag
+     * CHANNEL_GROUP_CONTROL control TRV mode, setpoint, boost
+     * CHANNEL_GROUP_STATUS status1..n Button/input events
+     *
+     */
 
     // Relay
     public static final String CHANNEL_GROUP_RELAY_CONTROL = "relay";
@@ -86,21 +107,32 @@ public class ShellyBindingConstants {
     // Power meter
     public static final String CHANNEL_GROUP_METER = "meter";
     public static final String CHANNEL_METER_CURRENTWATTS = "currentWatts";
+    public static final String CHANNEL_METER_CURRENTPOWER = "currentPower";
     public static final String CHANNEL_METER_LASTMIN = "lastPower";
-    public static final String CHANNEL_METER_LASTMIN1 = CHANNEL_METER_LASTMIN + "1";
+    public static final String CHANNEL_METER_LASTMIN1 = CHANNEL_METER_LASTMIN + "1"; // deprecated, use ENERGYHISTMIN1
+    public static final String CHANNEL_METER_ENERGYHISTMIN1 = "energyHistMin1"; // energy of the previous minute
+    public static final String CHANNEL_METER_ENERGYHISTMIN2 = "energyHistMin2"; // energy 2 minutes ago
+    public static final String CHANNEL_METER_ENERGYHISTMIN3 = "energyHistMin3"; // energy 3 minutes ago
+    // average of energyHistMin1/2/3 (Wh/minute), i.e. NOT a raw by_minute[] sample like the channels above
+    public static final String CHANNEL_METER_ENERGYAVGLAST3MIN = "energyAvgLast3Min";
     public static final String CHANNEL_METER_TOTALKWH = "totalKWH";
+    public static final String CHANNEL_METER_TOTALENERGY = "totalEnergy";
     public static final String CHANNEL_EMETER_TOTALRET = "returnedKWH";
-    public static final String CHANNEL_EMETER_REACTWATTS = "reactiveWatts";
+    public static final String CHANNEL_EMETER_RETURNEDENERGY = "returnedEnergy";
+    public static final String CHANNEL_EMETER_REACTWATTS = "reactiveWatts"; // deprecated, use CHANNEL_EMETER_REACTPOWER
+    public static final String CHANNEL_EMETER_REACTPOWER = "reactivePower";
+    public static final String CHANNEL_EMETER_APPARENT = "apparentPower";
     public static final String CHANNEL_EMETER_VOLTAGE = "voltage";
     public static final String CHANNEL_EMETER_CURRENT = "current";
     public static final String CHANNEL_EMETER_FREQUENCY = "frequency";
     public static final String CHANNEL_EMETER_PFACTOR = "powerFactor";
-    public static final String CHANNEL_EMETER_RESETTOTAL = "resetTotals";
+    public static final String CHANNEL_EMETER_RESETTOTAL = "resetTotals"; // meterN group (switch/pm1/em1 devices)
     public static final String CHANNEL_GROUP_NMETER = "nmeter";
     public static final String CHANNEL_NMETER_CURRENT = "ncurrent";
     public static final String CHANNEL_NMETER_IXSUM = "ixsum";
     public static final String CHANNEL_NMETER_MISMATCH = "nmismatch";
-    public static final String CHANNEL_NMETER_MTRESHHOLD = "nmTreshhold";
+    public static final String CHANNEL_NMETER_MTRESHHOLD = "nmTreshhold"; // deprecated, use CHANNEL_NMETER_THRESHOLD
+    public static final String CHANNEL_NMETER_THRESHOLD = "nmThreshold";
 
     public static final String CHANNEL_GROUP_SENSOR = "sensors";
     public static final String CHANNEL_SENSOR_TEMP = "temperature";
@@ -192,10 +224,17 @@ public class ShellyBindingConstants {
     public static final String CHANNEL_DEVST_WAKEUP = "wakeupReason";
     public static final String CHANNEL_DEVST_ALARM = "alarm";
     public static final String CHANNEL_DEVST_ACCUWATTS = "accumulatedWatts";
-    public static final String CHANNEL_DEVST_ACCUTOTAL = "accumulatedWTotal";
-    public static final String CHANNEL_DEVST_ACCURETURNED = "accumulatedReturned";
-    public static final String CHANNEL_DEVST_TOTALKWH = "totalKWH";
-    public static final String CHANNEL_DEVST_RESETTOTAL = CHANNEL_EMETER_RESETTOTAL;
+    public static final String CHANNEL_DEVST_ACCUMULATEDPOWER = "accumulatedPower";
+    public static final String CHANNEL_DEVST_ACCURETURNED = "accumulatedReturned"; // deprecated, use
+                                                                                   // CHANNEL_DEVST_ACCURETURNEDENERGY
+    public static final String CHANNEL_DEVST_ACCURETURNEDENERGY = "accumulatedReturnedEnergy";
+    public static final String CHANNEL_DEVST_ACCUAPPARENT = "accumulatedApparent";
+    public static final String CHANNEL_DEVST_ACCUTOTAL = "accumulatedWTotal"; // deprecated, use
+                                                                              // CHANNEL_DEVST_TOTALENERGY
+    public static final String CHANNEL_DEVST_TOTALKWH = "totalKWH"; // deprecated (device group), use
+                                                                    // CHANNEL_DEVST_TOTALENERGY
+    public static final String CHANNEL_DEVST_TOTALENERGY = "totalEnergy";
+    public static final String CHANNEL_DEVST_RESETTOTAL = CHANNEL_EMETER_RESETTOTAL; // device group (3EM only)
 
     public static final String CHANNEL_DEVST_CHARGER = "charger";
     public static final String CHANNEL_DEVST_UPDATE = "updateAvailable";
@@ -255,10 +294,11 @@ public class ShellyBindingConstants {
     // Formatting: Number of scaling digits
     public static final int DIGITS_NONE = 0;
     public static final int DIGITS_WATT = 2;
+    public static final int DIGITS_VAR = 2;
     public static final int DIGITS_KWH = 3;
-    public static final int DIGITS_VOLT = 1;
+    public static final int DIGITS_VOLT = 2;
     public static final int DIGITS_AMPERE = 3;
-    public static final int DIGITS_FREQUENCY = 1;
+    public static final int DIGITS_FREQUENCY = 2;
     public static final int DIGITS_TEMP = 1;
     public static final int DIGITS_LUX = 0;
     public static final int DIGITS_PERCENT = 1;
@@ -275,4 +315,6 @@ public class ShellyBindingConstants {
 
     public static final String BUNDLE_RESOURCE_SNIPLETS = "sniplets"; // where to find code sniplets in the bundle
     public static final String BUNDLE_RESOURCE_SCRIPTS = "scripts"; // where to find scrips in the bundle
+
+    public static final int DEFAULT_LOCAL_PORT = 8080;
 }
