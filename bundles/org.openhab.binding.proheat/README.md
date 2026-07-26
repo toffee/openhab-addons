@@ -6,15 +6,9 @@ This binding provides integration with Proheat HCC-02 snowmelting analog system.
 
 ### Serial Module
 
-
 ## Discovery
 
-
-
-
 ## Binding Configuration
-
-
 
 ## Thing Configuration
 
@@ -29,4 +23,3 @@ Sets the serial port name for the communication with the alarm system
 #### Baud Rate [baudrate]
 
 Baud rate to use for serial port communication
-
