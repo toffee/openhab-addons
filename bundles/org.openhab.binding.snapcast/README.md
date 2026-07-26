@@ -19,7 +19,7 @@ The Snapcast Server requires the ip address and port to access it on.
 The Snapcast Clients are identified by an ID.
 In the thing file, this looks e.g. like
 
-```
+```java
 Bridge snapcast:server:Snapcast [ host="192.168.0.42", port=1705 ]
 {
     Thing client b827eb761cca[ id="b8:27:eb:76:1c:ca" ]
@@ -36,7 +36,6 @@ The Snapcast Server support the following channels:
 | streamsPlaying          | String    | Get an comma-seperated list of all playing streams                                     |
 | streamsIdle             | String    | Get an comma-seperated list of all idle streams                                        |
 
-
 The Snapcast Client support the following channels:
 
 | Channel Type ID         | Item Type | Description                                                                            |
@@ -48,12 +47,11 @@ The Snapcast Client support the following channels:
 | stream                  | String    | Set or get the stream of the client                                                    |
 | streamStatus            | String    | Get the stream status (e.g. playing, idle)                                             |
 
-
 ## Full Example
 
 demo.things:
 
-```
+```java
 Bridge snapcast:server:Snapcast [ host="192.168.0.42", port=1705 ]
 {
     Thing client b827eb761cca[ id="b8:27:eb:76:1c:ca" ]
@@ -62,7 +60,7 @@ Bridge snapcast:server:Snapcast [ host="192.168.0.42", port=1705 ]
 
 demo.items:
 
-```
+```java
 Group  Snapcast                            <player>
 Dimmer Snapclient1_Volume "Volume [%d %%]" <soundvolume>      (Snapcast) {channel="snapcast:client:Snapcast:b827eb761cca:volume"}
 Switch Snapclient1_Mute "Mute"             <soundvolume_mute> (Snapcast) {channel="snapcast:client:Snapcast:b827eb761cca:mute"}
@@ -72,7 +70,7 @@ String Snapclient1_Status "Status"         <switch>           (Snapcast) {channe
 
 demo.sitemap:
 
-```
+```perl
 sitemap demo label="Main Menu"
 {
     Frame label="Snapcast" {
